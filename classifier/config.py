@@ -1,4 +1,4 @@
-from data.utils import inverse_weights
+from utils import inverse_weights
 
 metadata_csv = '/Users/sofia/PycharmProjects/smartDots/data/original_all_accordance/smartDots_Species_v2.csv'
 
@@ -27,8 +27,8 @@ total_classes = 11
 weights = inverse_weights([283,668,589,804,791,690,504,339,247,156,108])
 
 # Possible values: 'Pleuronectes platessa', 'Ammodytes', 'Solea solea', 'Pollachius pollachius', 'Micromesistius poutassou', 'Pollachius virens', 'Gadus morhua', etc.
-filter_species = None
-# filter_species = 'Ammodytes'
+# filter_species = None
+filter_species = 'Ammodytes'
 
 device = 'mps'
 subsample_fraction = 1.0

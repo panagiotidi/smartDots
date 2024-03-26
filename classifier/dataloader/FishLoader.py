@@ -1,11 +1,9 @@
-import cv2
 import pandas as pd
 import torch
 from PIL import Image
-from flatbuffers.builder import np
 from torch.utils.data import Dataset
 from classifier.config import device, total_classes, regression
-from data.utils import unify_label
+from utils import unify_label
 
 
 def get_label_from_row(row):

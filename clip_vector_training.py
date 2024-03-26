@@ -60,7 +60,7 @@ test_features, test_labels = get_features(valDataset)
 # classifier = LogisticRegression(random_state=0, C=0.316, max_iter=1000, verbose=1)
 # classifier.fit(train_features, train_labels)
 
-classifier = SVC(gamma='auto', C=0.2, class_weight='balanced')
+classifier = SVC(gamma='scale', C=0.2, class_weight='balanced')
 classifier.fit(train_features, train_labels)
 
 # Evaluate using the logistic regression classifier
