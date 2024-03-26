@@ -18,6 +18,7 @@ def get_label_from_row(row):
             label[int(age)] = 1.0
             return label
         except:
+            print('Error! Switching to unified label!!')
             return unify_label(row, total_classes)
     # ordenal
     # See https://stackoverflow.com/questions/38375401/neural-network-ordinal-classification-for-age

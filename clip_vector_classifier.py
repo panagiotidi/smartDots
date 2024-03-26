@@ -62,7 +62,6 @@ accuracy = np.mean((test_labels == predictions).astype(float)) * 100
 print(f"Accuracy = {accuracy:.3f}")
 
 metric_conf_matrix = MulticlassConfusionMatrix(num_classes=total_classes)
-print(test_labels)
 # metric_conf_matrix.update(predictions, test_labels)
 # print('Confusion matrix\n', metric_conf_matrix.compute())
 
@@ -79,7 +78,6 @@ accuracy = np.mean((test_labels == predictions).astype(float)) * 100
 print(f"Accuracy = {accuracy:.3f}")
 
 metric_conf_matrix = MulticlassConfusionMatrix(num_classes=total_classes)
-print(test_labels)
 # metric_conf_matrix.update(predictions, test_labels)
 # print('Confusion matrix\n', metric_conf_matrix.compute())
 

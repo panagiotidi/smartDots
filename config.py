@@ -20,11 +20,14 @@ model_name = 'Inception'
 #  'ordinal' : Ordinal regression is half-way between classification and real-valued regression. When you perform multiclass classification of your ordinal data, you are assigning the same penalty whenever your classifier predicts a wrong class, no matter which one.
 regression = 'categorical'
 
-total_classes = 11
+total_classes = 6
 
 # weights = total_classes * [1.0]
 # weights = inverse_weights([69, 171, 141, 189, 199, 173, 118, 102, 68, 31, 32])
-weights = inverse_weights([283,668,589,804,791,690,504,339,247,156,108])
+# weights = inverse_weights([283,668,589,804,791,690,504,339,247,156,108])
+weights = inverse_weights([16, 39, 98, 271, 414, 444])
+
+
 
 # Possible values: 'Pleuronectes platessa', 'Ammodytes', 'Solea solea', 'Pollachius pollachius', 'Micromesistius poutassou', 'Pollachius virens', 'Gadus morhua', etc.
 # filter_species = None

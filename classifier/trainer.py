@@ -14,7 +14,6 @@ from classifier.dataloader.FishLoader import FishDataset
 from classifier.models.model_GoogLeNet import GoogLeNet
 from classifier.models.model_net import Net
 from classifier.models.model_resnet import ResNet
-
 from classifier.models.model_Inception import Inception
 
 
@@ -98,7 +97,6 @@ if __name__ == '__main__':
         all_preds = []
         for i, data in enumerate(trainDataLoader, 0):
             inputs, labels = data
-            all_labels = all_labels + list(labels.argmax(1).clone().detach().cpu().numpy())
 
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -106,7 +104,6 @@ if __name__ == '__main__':
             # print('outputs.shape:', outputs)
             # print('labels.shape:', labels)
             loss = criterion(outputs, labels)
-            all_preds = all_preds + list(outputs.argmax(1).clone().detach().cpu())
 
             loss.backward()
             optimizer.step()
@@ -118,7 +115,6 @@ if __name__ == '__main__':
 
         scheduler.step()
         print(f"Epoch {epoch + 1}, Loss: {running_loss / len(trainDataLoader)}")
-        print(classification_report(all_labels, all_preds, zero_division=nan))
 
         val_loss = 0
         accuracy = 0
@@ -128,17 +124,22 @@ if __name__ == '__main__':
             for i, data in enumerate(valDataLoader, 0):
                 inputs, labels = data
                 logps = model(inputs)
+                print(logps.shape)
                 labels.to(device)
+                print(labels.shape)
                 loss = criterion(logps, labels)
                 # print('val batch loss:', loss.item())
                 val_loss += loss.item()
-                metric_conf_matrix.update(outputs, labels.argmax(1))
+                metric_conf_matrix.update(logps.argmax(1).clone().detach().cpu(), labels.argmax(1).clone().detach().cpu())
+                all_labels = all_labels + list(labels.argmax(1).clone().detach().cpu().numpy())
+                all_preds = all_preds + list(logps.argmax(1).clone().detach().cpu())
 
             # ps = torch.exp(logps)
             # top_p, top_class = ps.topk(1, dim=1)
             # equals = top_class == labels.view(*top_class.shape)
         print(f"Epoch {epoch + 1}, Val Loss: {val_loss / len(valDataLoader)}")
         print('Confusion matrix\n', metric_conf_matrix.compute())
+        print(classification_report(all_labels, all_preds, zero_division=nan))
 
         # # accuracy += torch.mean(equals.type(torch.FloatTensor)).item()
         # train_losses.append(running_loss / len(trainDataLoader))
