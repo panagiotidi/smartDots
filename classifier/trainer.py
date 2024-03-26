@@ -18,7 +18,7 @@ from classifier.models.model_Inception import Inception
 
 
 from config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
-    filter_species, model_name, regression, total_classes
+    filter_species, model_name, regression, total_classes, weight_decay
 
 
 def str_to_class(classname):
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     #################### Optimizer, Scheduler ###############################3
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     # optimizer = SGD(model.parameters(), lr=learning_rate, momentum=0.9)
 
     scheduler = LinearLR(optimizer, total_iters=epochs)
@@ -124,9 +124,9 @@ if __name__ == '__main__':
             for i, data in enumerate(valDataLoader, 0):
                 inputs, labels = data
                 logps = model(inputs)
-                print(logps.shape)
+                # print(logps.shape)
                 labels.to(device)
-                print(labels.shape)
+                # print(labels.shape)
                 loss = criterion(logps, labels)
                 # print('val batch loss:', loss.item())
                 val_loss += loss.item()
