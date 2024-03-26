@@ -39,5 +39,6 @@ BATCH_SIZE = 12
 VAL_SPLIT = 0.2
 epochs = 4
 learning_rate = 1e-04
+weight_decay = 0.2
 
 
