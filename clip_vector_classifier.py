@@ -1,20 +1,15 @@
 import os
+
 import clip
 import torch
 from numpy import nan
 
 import numpy as np
-from PIL import Image
-from clip.model import CLIP
-from keras import device
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 from torcheval.metrics import MulticlassConfusionMatrix
-from torchvision.transforms import Compose, ToTensor
 from tqdm import tqdm
-from classifier.config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, total_classes, weights
+from config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, total_classes
 from classifier.dataloader.FishLoader import FishDataset
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
@@ -27,8 +22,8 @@ model_version = 'ViT-L/14@336px'
 # Load the model
 model, preprocess = clip.load(model_version, 'mps')
 
-trainDataset = FishDataset(clean_data_path + 'train/', preprocess=preprocess, fraction=subsample_fraction, filter_species=filter_species)
-valDataset = FishDataset(clean_data_path + 'val/', preprocess=preprocess, fraction=subsample_fraction, filter_species=filter_species)
+trainDataset = FishDataset(os.path.join(clean_data_path, 'train'), preprocess=preprocess, fraction=subsample_fraction, filter_species=filter_species)
+valDataset = FishDataset(os.path.join(clean_data_path, 'val'), preprocess=preprocess, fraction=subsample_fraction, filter_species=filter_species)
 
 # # create training and validation set dataloaders
 trainDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -56,16 +51,31 @@ def get_features(dataset):
 train_features, train_labels = get_features(trainDataset)
 test_features, test_labels = get_features(valDataset)
 
-# # Perform logistic regression
-# classifier = LogisticRegression(random_state=0, C=0.316, max_iter=1000, verbose=1)
-# classifier.fit(train_features, train_labels)
-
-classifier = SVC(gamma='scale', C=0.2, class_weight='balanced')
+# -------------------------------------------------------------------------------
+# Perform logistic regression
+classifier = LogisticRegression(random_state=0, C=0.316, max_iter=1000, verbose=1)
 classifier.fit(train_features, train_labels)
 
 # Evaluate using the logistic regression classifier
 predictions = classifier.predict(test_features)
-accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
+accuracy = np.mean((test_labels == predictions).astype(float)) * 100
+print(f"Accuracy = {accuracy:.3f}")
+
+metric_conf_matrix = MulticlassConfusionMatrix(num_classes=total_classes)
+print(test_labels)
+# metric_conf_matrix.update(predictions, test_labels)
+# print('Confusion matrix\n', metric_conf_matrix.compute())
+
+print(classification_report(test_labels, predictions, zero_division=nan))
+
+# -------------------------------------------------------------------------------
+
+classifier = SVC(gamma='auto', C=0.5, class_weight='balanced')
+classifier.fit(train_features, train_labels)
+
+# Evaluate using the logistic regression classifier
+predictions = classifier.predict(test_features)
+accuracy = np.mean((test_labels == predictions).astype(float)) * 100
 print(f"Accuracy = {accuracy:.3f}")
 
 metric_conf_matrix = MulticlassConfusionMatrix(num_classes=total_classes)

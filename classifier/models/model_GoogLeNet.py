@@ -2,7 +2,7 @@ import torch
 from torch.nn import Linear, Module, Softmax, Sigmoid, ReLU
 from torchvision.models import GoogLeNet_Weights
 
-from classifier.config import total_classes, regression
+from config import total_classes, regression
 
 
 class GoogLeNet(Module):

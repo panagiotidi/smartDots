@@ -1,24 +1,25 @@
+import os
 import sys
 
 import torch.nn as nn
-import torcheval.metrics
 from numpy import nan
 from sklearn.metrics import classification_report
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import DataLoader
 import torch
 from torcheval.metrics import MulticlassConfusionMatrix
-from torchmetrics import R2Score
-from torchvision.transforms import ToTensor, Compose, Normalize, Grayscale, Resize
+from torchvision.transforms import ToTensor, Compose, Resize
 
 from classifier.dataloader.FishLoader import FishDataset
-from classifier.config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
-    filter_species, model_name, regression, total_classes
-from classifier.models.model_Inception import Inception
-from classifier.models.model_ResNetUNet import ResNetUNet
 from classifier.models.model_GoogLeNet import GoogLeNet
-from classifier.models.model_resnet import ResNet
 from classifier.models.model_net import Net
+from classifier.models.model_resnet import ResNet
+
+from classifier.models.model_Inception import Inception
+
+
+from config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
+    filter_species, model_name, regression, total_classes
 
 
 def str_to_class(classname):
@@ -53,8 +54,8 @@ if __name__ == '__main__':
 
     #################### Data preparation ###############################3
 
-    trainDataset = FishDataset(clean_data_path + 'train/', preprocess=transforms, fraction=subsample_fraction, filter_species=filter_species)
-    valDataset = FishDataset(clean_data_path + 'val/', preprocess=transforms, fraction=subsample_fraction, filter_species=filter_species)
+    trainDataset = FishDataset(os.path.join(clean_data_path, 'train'), preprocess=transforms, fraction=subsample_fraction, filter_species=filter_species)
+    valDataset = FishDataset(os.path.join(clean_data_path, 'val'), preprocess=transforms, fraction=subsample_fraction, filter_species=filter_species)
 
     # # create training and validation set dataloaders
     trainDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE, shuffle=True)

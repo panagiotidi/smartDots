@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 from torch.nn import Linear, Softmax, Sigmoid, ReLU
 from torchvision import models
-from torchvision.models import ResNet18_Weights, ResNet101_Weights
+from torchvision.models import ResNet18_Weights
 
-from classifier.config import total_classes, regression
+from config import total_classes, regression
 
 
 def convrelu(in_channels, out_channels, kernel, padding):

@@ -1,8 +1,7 @@
-import torch.nn
 import torchvision
-from torch.nn import Linear, Module, Softmax, AvgPool2d, Dropout, ReLU, Sigmoid
-from torchvision.models import ResNet50_Weights, ResNet, ResNet101_Weights
-from classifier.config import total_classes, device, regression
+from torch.nn import Linear, Module, Softmax, Dropout, ReLU, Sigmoid
+from torchvision.models import ResNet, ResNet101_Weights
+from config import total_classes, regression
 
 
 class ResNet(Module):

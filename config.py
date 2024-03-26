@@ -2,10 +2,10 @@ from utils import inverse_weights
 
 metadata_csv = '/Users/sofia/PycharmProjects/smartDots/data/original_all_accordance/smartDots_Species_v2.csv'
 
-original_path = '/Users/sofia/PycharmProjects/smartDots/data/original_all_accordance/'
-# clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed512x512/'
-# clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed512x512_2/'
-clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed256x256/'
+original_path = 'data/original_all_accordance'
+# clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed512x512'
+# clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed512x512_2'
+clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed256x256'
 
 # set the input height and width
 INPUT_HEIGHT = 224 #(416, 416)
@@ -28,7 +28,7 @@ weights = inverse_weights([283,668,589,804,791,690,504,339,247,156,108])
 
 # Possible values: 'Pleuronectes platessa', 'Ammodytes', 'Solea solea', 'Pollachius pollachius', 'Micromesistius poutassou', 'Pollachius virens', 'Gadus morhua', etc.
 # filter_species = None
-filter_species = 'Ammodytes'
+filter_species = 'Pleuronectes platessa'
 
 device = 'mps'
 subsample_fraction = 1.0

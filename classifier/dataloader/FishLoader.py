@@ -1,8 +1,10 @@
+import os
+
 import pandas as pd
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
-from classifier.config import device, total_classes, regression
+from config import device, total_classes, regression
 from utils import unify_label
 
 
@@ -36,7 +38,7 @@ class FishDataset(Dataset):
         self.pics_path = pics_path
         self.preprocess = preprocess
 
-        dataset = pd.read_csv(pics_path + "data.csv")
+        dataset = pd.read_csv(os.path.join(pics_path, "data.csv"))
         print('Dataset size:', len(dataset))
 
         if filter_species:
@@ -56,7 +58,7 @@ class FishDataset(Dataset):
         self.labels = []
         for index, row in dataset.iterrows():
             img_base_name = row['Species'] + '_' + str(row['ModalAge_AllReaders']) + '_' + row['ImageName']
-            img_path = pics_path + img_base_name
+            img_path = os.path.join(pics_path, img_base_name)
             self.data.append(img_path)
             label = get_label_from_row(row)
             self.labels.append(label)

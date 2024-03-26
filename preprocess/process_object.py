@@ -1,11 +1,8 @@
 import sys
 import cv2
 import numpy as np
-from cv2.saliency import Saliency
-from sklearn.linear_model import LogisticRegression
 
-from classifier import config
-
+import config
 
 np.set_printoptions(threshold=sys.maxsize)
 

@@ -3,7 +3,7 @@ import traceback
 import cv2
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from classifier.config import VAL_SPLIT, original_path, clean_data_path, metadata_csv
+from config import VAL_SPLIT, original_path, clean_data_path, metadata_csv
 from utils import create_name, is_label_ok
 from process_object import pre_process
 

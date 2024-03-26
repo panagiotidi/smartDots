@@ -1,7 +1,7 @@
 import torch
 import torchvision
-from torch.nn import Linear, Module, Softmax, Sigmoid, ReLU
-from classifier.config import total_classes, regression
+from torch.nn import Module, Softmax, Sigmoid, ReLU
+from config import total_classes, regression
 
 
 class Inception(Module):
