@@ -77,4 +77,3 @@ class FishDataset(Dataset):
         classes_annotations = torch.as_tensor(classes_annotations).float().to(device)
 
         return input_image.float().to(device), classes_annotations
-        # return img_tensor.float().to(device), classes_annotations

@@ -6,7 +6,7 @@
 # from tensorflow._api.v2 import image
 from tensorflow._api.v2 import image
 
-from classifier.models.model_unet import unet_model
+from main_classifier.models.model_unet import unet_model
 
 file = '/Users/sofia/PycharmProjects/smartDots/data/original_all_accordance/2018_195_2c99947d-a34e-4c8e-b0f6-b52bdfa06b5a.jpg'
 

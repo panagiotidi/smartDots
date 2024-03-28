@@ -4,17 +4,22 @@ import sys
 import torch.nn as nn
 from numpy import nan
 from sklearn.metrics import classification_report
+from torch.optim import SGD
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import DataLoader
 import torch
 from torcheval.metrics import MulticlassConfusionMatrix
 from torchvision.transforms import ToTensor, Compose, Resize
+from torchvision.transforms.v2 import Normalize, Grayscale
+from transformers import CLIPModel
 
-from classifier.dataloader.FishLoader import FishDataset
-from classifier.models.model_GoogLeNet import GoogLeNet
-from classifier.models.model_net import Net
-from classifier.models.model_resnet import ResNet
-from classifier.models.model_Inception import Inception
+from main_classifier.dataloader.FishLoader import FishDataset
+
+from main_classifier.models.model_GoogLeNet import GoogLeNet
+from main_classifier.models.model_net import Net
+from main_classifier.models.model_resnet import ResNet
+from main_classifier.models.model_Inception import Inception
+from main_classifier.models.model_CLIP import Clip
 
 
 from config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
@@ -31,25 +36,33 @@ if __name__ == '__main__':
 
     class_weights = weights
 
+    #################### Model ###############################3
+
+    model = str_to_class(model_name)().to('mps')
+    print('Model: ', model.__class__)
+
     #################### Define preprocess ###############################3
 
-    # trainTransforms = transforms.Compose([resize, hFlip, vFlip, rotate, transforms.ToTensor()])
-    # valTransforms = transforms.Compose([resize, transforms.ToTensor()])
+    if model_name == 'Clip':
+        transforms = model.get_preprocess()
+    else:
+        # trainTransforms = transforms.Compose([resize, hFlip, vFlip, rotate, transforms.ToTensor()])
+        # valTransforms = transforms.Compose([resize, transforms.ToTensor()])
 
-    # initialize our data augmentation functions
-    # resize = transforms.Resize(size=(INPUT_HEIGHT, INPUT_WIDTH))
-    # hFlip = transforms.RandomHorizontalFlip(p=0.25)
-    # vFlip = transforms.RandomVerticalFlip(p=0.25)
-    # rotate = transforms.RandomRotation(degrees=15)
-    # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        # initialize our data augmentation functions
+        # resize = transforms.Resize(size=(INPUT_HEIGHT, INPUT_WIDTH))
+        # hFlip = transforms.RandomHorizontalFlip(p=0.25)
+        # vFlip = transforms.RandomVerticalFlip(p=0.25)
+        # rotate = transforms.RandomRotation(degrees=15)
+        # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
-    transforms = Compose([
-                Resize(512),
-                # transforms.CenterCrop(224),
-                ToTensor(),
-                # Grayscale(3),
-                # Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-            ])
+        transforms = Compose([
+                    # Resize(512),
+                    # transforms.CenterCrop(224),
+                    ToTensor(),
+                    # Grayscale(1),
+                    # Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+                ])
 
     #################### Data preparation ###############################3
 
@@ -62,10 +75,6 @@ if __name__ == '__main__':
     valDataLoader = DataLoader(valDataset, batch_size=BATCH_SIZE)
     print('Val DataLoader length:', len(valDataLoader))
 
-    #################### Model ###############################3
-
-    model = str_to_class(model_name)().to('mps')
-    print('Model: ', model.__class__)
     #################### Loss ###############################3
     print('Regression type: ', regression)
 
@@ -83,18 +92,22 @@ if __name__ == '__main__':
     #################### Optimizer, Scheduler ###############################3
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    # optimizer = SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    # optimizer = SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay)
 
     scheduler = LinearLR(optimizer, total_iters=epochs)
+    print('Weight decay:', weight_decay)
+    print('Learning rate:', learning_rate)
     #################### Train process ###############################3
 
-    train_losses, val_losses = [], []
+    # train_losses, val_losses = [], []
 
     for epoch in range(epochs):
         running_loss = 0.0
         model.train()
         all_labels = []
         all_preds = []
+        metric_conf_matrix.reset()
+
         for i, data in enumerate(trainDataLoader, 0):
             inputs, labels = data
 

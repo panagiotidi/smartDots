@@ -26,7 +26,7 @@ class Inception(Module):
         if not torch.is_tensor(out):
             out = out.logits
 
-        out = self.relu(out)
+        # out = self.relu(out)
         if regression == 'continuous':
             predictions = out.squeeze(-1)
         elif regression == 'categorical':
