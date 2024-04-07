@@ -1,0 +1,44 @@
+import torch
+from torch.nn import Linear, Module, Softmax, Sigmoid, ReLU
+from transformers import AutoImageProcessor, ViTForImageClassification
+
+from config import total_classes, regression, device
+
+
+class ViT(Module):
+
+    def __init__(self):
+        super().__init__()
+
+        # ViT model
+        self.image_processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
+        self.vit_model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224",
+                                                                   num_labels=total_classes,
+                                                                   ignore_mismatched_sizes=True)
+
+        if regression == 'continuous':
+            self.linear = Linear(in_features=1000, out_features=1)
+        else:
+            self.linear = Linear(in_features=1000, out_features=total_classes)
+
+        self.softmax = Softmax(dim=1)
+        self.sigmoid = Sigmoid()
+        self.relu = ReLU()
+
+    def forward(self, input):
+
+        inputs = self.image_processor(input, return_tensors="pt", do_rescale=False).to(device)
+        out = self.vit_model(**inputs)
+
+        # Train mode returns GoogLeNetOutputs class with logits
+        if not torch.is_tensor(out):
+            out = out.logits
+
+        if regression == 'continuous':
+            predictions = out.squeeze(-1)
+        elif regression == 'categorical':
+            predictions = self.softmax(out)
+        else:
+            predictions = self.sigmoid(out)
+
+        return predictions

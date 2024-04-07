@@ -1,17 +1,26 @@
 from utils import inverse_weights
 
-metadata_csv = '/Users/sofia/PycharmProjects/smartDots/data/original_all_accordance/smartDots_Species_v2.csv'
-
-original_path = 'data/original_all_accordance'
-clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed512x512'
+# ---------------------------------------------------------------------------------------------------------------
+# Settings for downloading data
+metadata_csv = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024/SmartDotsSummaryExtraction-2.csv'
+original_path = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024'
+# original_path = '/Users/sofia/PycharmProjects/smartDots/subset'
+MinMaxAgeDif = 3
+# ---------------------------------------------------------------------------------------------------------------
+# Settings for preprocessing data
+data_csv = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024/data.csv'
+clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024_processed_simple'
+# clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/subset/out_sofia'
 # clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed256x256'
 
+# ---------------------------------------------------------------------------------------------------------------
+
 # set the input height and width
-INPUT_HEIGHT = 512 #(416, 416)
+INPUT_HEIGHT = 512  # (416, 416)
 INPUT_WIDTH = 512
 
-# Options: 'ResNet', 'GoogLeNet', 'ResNetUNet', 'Inception', 'Clip'
-model_name = 'Clip'
+# Options: 'ResNet', 'GoogLeNet', 'ResNetUNet', 'Inception', 'Clip', 'ViT'
+model_name = 'ViT'
 
 # Options:
 #  'categorical': classification, logistic regression
@@ -27,7 +36,7 @@ total_classes = 6
 weights = inverse_weights([15, 47, 103, 261, 429, 430])
 
 # Possible values: None, 'Pleuronectes platessa', 'Ammodytes', 'Solea solea', 'Pollachius pollachius', 'Micromesistius poutassou', 'Pollachius virens', 'Gadus morhua', etc.
-filter_species = None
+filter_species = 'Pleuronectes platessa'
 
 device = 'mps'
 subsample_fraction = 1.0
@@ -37,6 +46,8 @@ VAL_SPLIT = 0.2
 # ----------- For trainer -------------#
 epochs = 16
 learning_rate = 1e-04
-weight_decay = 0.001
+weight_decay = 0.01
 # ----------- For SVC_regression -------------#
-C=0.
+C = 0.6
+# ----------- Metric settings -------------#
+metric_max_diff = 1

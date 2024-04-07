@@ -37,7 +37,7 @@ def mask_largest_object(image):
     # cv2.imshow('1. Gray image', gray_img)
 
     lower = np.array([0])
-    upper = np.array([50])
+    upper = np.array([90])
     in_range = cv2.inRange(gray_img, lower, upper)
     in_range = cv2.bitwise_not(in_range)
     # cv2.imshow('2. Gray image inRange', in_range)
@@ -59,7 +59,7 @@ def mark_largest(image):
     return mask_out, stats
 
 
-def pre_process(file, image):
+def pre_process(image):
 
     # Find and crop area of interest
     marked, stats = mark_largest(image)
@@ -94,22 +94,22 @@ def pre_process(file, image):
 
     # Sobel Edge Detection
 
-    grey = cv2.cvtColor(marked_and_cropped, cv2.COLOR_BGR2GRAY)
-    # cv2.imshow(file + '1', grey)
-
-    # sobelx = cv2.Sobel(src=grey, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=3)  # Sobel Edge Detection on the X axis
-    # cv2.imshow('sobelx1', sobelx)
+    # grey = cv2.cvtColor(marked_and_cropped, cv2.COLOR_BGR2GRAY)
+    # # cv2.imshow(file + '1', grey)
     #
-    # edges = cv2.Canny(np.uint8(sobelx), 100, 200)
-    # cv2.imshow('edges2', edges)
-    # contours, hierarchy = cv2.findContours(grey, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
-    # contour_image = np.zeros_like(marked_and_cropped)
-    # cv2.drawContours(contour_image, contours, -1, (0, 255, 0), 3)
-    # cv2.imshow(file, contour_image)
-    # cv2.waitKey(0)
-
-    # cv2.imshow(file, sobelx)
-    sobely = cv2.Sobel(src=grey, ddepth=cv2.CV_64F, dx=0, dy=1, ksize=5)  # Sobel Edge Detection on the Y axis
+    # # sobelx = cv2.Sobel(src=grey, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=3)  # Sobel Edge Detection on the X axis
+    # # cv2.imshow('sobelx1', sobelx)
+    # #
+    # # edges = cv2.Canny(np.uint8(sobelx), 100, 200)
+    # # cv2.imshow('edges2', edges)
+    # # contours, hierarchy = cv2.findContours(grey, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
+    # # contour_image = np.zeros_like(marked_and_cropped)
+    # # cv2.drawContours(contour_image, contours, -1, (0, 255, 0), 3)
+    # # cv2.imshow(file, contour_image)
+    # # cv2.waitKey(0)
+    #
+    # # cv2.imshow(file, sobelx)
+    # sobely = cv2.Sobel(src=grey, ddepth=cv2.CV_64F, dx=0, dy=1, ksize=5)  # Sobel Edge Detection on the Y axis
     # cv2.imshow('6. Contour detection using grey channels only1', sobely)
     # sobelxy = cv2.Sobel(src=img_gray, ddepth=cv2.CV_64F, dx=1, dy=1, ksize=5)  # Combined X and Y Sobel Edge Detection
     # cv2.imshow('7. Contour detection using grey channels only2', sobelxy)
@@ -119,10 +119,10 @@ def pre_process(file, image):
     # print(contours0)
     # cv2.imshow('Contour detection using grey channels only', r)
 
-    return_img = cv2.resize(sobely, (config.INPUT_WIDTH, config.INPUT_HEIGHT))
+    return_img = cv2.resize(marked_and_cropped, (config.INPUT_WIDTH, config.INPUT_HEIGHT))
 
     # change mask to a 3 channel image
-    return_img = cv2.merge((return_img, return_img, return_img))
+    # return_img = cv2.merge((return_img, return_img, return_img))
     return return_img
 
 

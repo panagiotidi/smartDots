@@ -1,6 +1,6 @@
 import clip
 import torch
-from torch.nn import Linear, Module, Softmax, Sigmoid, ReLU
+from torch.nn import Linear, Module, Softmax, Sigmoid, ReLU, Tanh
 from torchvision.transforms.v2 import Normalize
 from transformers import CLIPModel, CLIPImageProcessor, CLIPFeatureExtractor, CLIPProcessor
 from config import total_classes, regression, device
@@ -31,17 +31,20 @@ class Clip(Module):
 
         # self.preprocess = CLIPImageProcessor.from_pretrained(model_version)
         # self.clip_model = CLIPFeatureExtractor.from_pretrained(model_version)
-        self.linear0 = Linear(in_features=768, out_features=1000)
+        self.linear0 = Linear(in_features=768, out_features=500)
+        self.linear1 = Linear(in_features=500, out_features=500)
+        # self.linear2 = Linear(in_features=500, out_features=1000)
 
         if regression == 'continuous':
-            self.linear = Linear(in_features=1000, out_features=1)
+            self.linear = Linear(in_features=500, out_features=1)
         else:
-            self.linear = Linear(in_features=1000, out_features=total_classes)
+            self.linear = Linear(in_features=500, out_features=total_classes)
 
         self.normalize = Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         self.softmax = Softmax(dim=1)
         self.sigmoid = Sigmoid()
         self.relu = ReLU()
+        self.tanh = Tanh()
 
     def train(self, mode: bool = True):
         if not isinstance(mode, bool):
@@ -50,6 +53,7 @@ class Clip(Module):
         for module_name, module in self.named_children():
             if module_name != 'clip_model':
                 module.train(mode)
+        self.clip_model.train(False)
         return self
 
     def eval(self):
@@ -63,6 +67,8 @@ class Clip(Module):
         features = self.clip_model.encode_image(input)
         out = self.linear0(features)
         out = self.relu(out)
+        out = self.linear1(out)
+        out = self.tanh(out)
         out = self.linear(out)
 
         if regression == 'continuous':

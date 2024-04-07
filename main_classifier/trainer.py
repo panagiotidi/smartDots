@@ -1,6 +1,7 @@
 import os
 import sys
 
+import numpy as np
 import torch.nn as nn
 from numpy import nan
 from sklearn.metrics import classification_report
@@ -11,11 +12,10 @@ import torch
 from torcheval.metrics import MulticlassConfusionMatrix
 from torchvision.transforms import ToTensor, Compose, Resize
 from torchvision.transforms.v2 import Normalize, Grayscale
-from transformers import CLIPModel
-
 from main_classifier.dataloader.FishLoader import FishDataset
 
 from main_classifier.models.model_GoogLeNet import GoogLeNet
+from main_classifier.models.model_ViT import ViT
 from main_classifier.models.model_net import Net
 from main_classifier.models.model_resnet import ResNet
 from main_classifier.models.model_Inception import Inception
@@ -23,7 +23,8 @@ from main_classifier.models.model_CLIP import Clip
 
 
 from config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
-    filter_species, model_name, regression, total_classes, weight_decay
+    filter_species, model_name, regression, total_classes, weight_decay, metric_max_diff
+from utils import compute_max_diff
 
 
 def str_to_class(classname):
@@ -104,8 +105,6 @@ if __name__ == '__main__':
     for epoch in range(epochs):
         running_loss = 0.0
         model.train()
-        all_labels = []
-        all_preds = []
         metric_conf_matrix.reset()
 
         for i, data in enumerate(trainDataLoader, 0):
@@ -114,8 +113,8 @@ if __name__ == '__main__':
             optimizer.zero_grad()
             outputs = model(inputs)
             # print('inputs.shape:', inputs.shape)
-            # print('outputs.shape:', outputs)
-            # print('labels.shape:', labels)
+            # print('outputs.shape:', outputs.shape)
+            # print('labels.shape:', labels.shape)
             loss = criterion(outputs, labels)
 
             loss.backward()
@@ -132,6 +131,8 @@ if __name__ == '__main__':
         val_loss = 0
         accuracy = 0
         model.eval()
+        all_labels = []
+        all_preds = []
         with torch.no_grad():
 
             for i, data in enumerate(valDataLoader, 0):
@@ -147,17 +148,7 @@ if __name__ == '__main__':
                 all_labels = all_labels + list(labels.argmax(1).clone().detach().cpu().numpy())
                 all_preds = all_preds + list(logps.argmax(1).clone().detach().cpu())
 
-            # ps = torch.exp(logps)
-            # top_p, top_class = ps.topk(1, dim=1)
-            # equals = top_class == labels.view(*top_class.shape)
         print(f"Epoch {epoch + 1}, Val Loss: {val_loss / len(valDataLoader)}")
         print('Confusion matrix\n', metric_conf_matrix.compute())
         print(classification_report(all_labels, all_preds, zero_division=nan))
-
-        # # accuracy += torch.mean(equals.type(torch.FloatTensor)).item()
-        # train_losses.append(running_loss / len(trainDataLoader))
-        # val_losses.append(val_loss / len(valDataLoader))
-        # print(f"Epoch {epoch + 1}/{config.epochs}.. "
-        #   # f"Train loss: {running_loss / print_every:.3f}.. "
-        #   f"Val loss: {val_loss / len(valDataLoader):.3f}.. "
-        #   f"Test accuracy: {accuracy / len(valDataLoader):.3f}")
+        print('Metric:', compute_max_diff(np.array(all_labels), np.array(all_preds), metric_max_diff))

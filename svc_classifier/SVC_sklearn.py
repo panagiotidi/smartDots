@@ -12,10 +12,12 @@ from torchvision.transforms import Compose, ToTensor
 from torchvision.transforms.v2 import Grayscale, Resize
 from tqdm import tqdm
 from config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, regression, model_name, device, \
-    total_classes, C
+    total_classes, C, metric_max_diff
 from main_classifier.dataloader.FishLoader import FishDataset
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
+
+from utils import compute_max_diff
 
 print('Model: ', model_name)
 if model_name == 'Clip':
@@ -103,3 +105,4 @@ print(f"Accuracy = {accuracy:.3f}")
 
 print(classification_report(test_labels, predictions, zero_division=nan))
 
+print('Metric:', compute_max_diff(test_labels, predictions, metric_max_diff))

@@ -1,6 +1,19 @@
-SVC categorical, with features from Clip, all species, C=0.6, 512x512 pics, 6 classes,
+SVC categorical, Clip, all species, C=0.6, 512x512 pics, 6 classes,
 accuracy: 0.48
 
 ----------------
 main classifier, categorical, Inception features, all species, 1e-04, wd 0.001, 512x512 pics, 6 classes, 16 epochs, inverse_weights,
 accuracy: 0.3 (before finish)
+
+----------------------
+SVM custom(kernel='linear', k=4, C=0.05), Clip, all species, 512x512 pics, 6 classes,
+accuracy: 0.46
+
+
+----------------------
+
+ToDo
+
+Lora Adapters
+Ordinal regression
+Center of otolith + 4 slices

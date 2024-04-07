@@ -1,123 +1,111 @@
-# Taken from:
-# https://towardsdatascience.com/implement-multiclass-svm-from-scratch-in-python-b141e43dc084#9c9f
+import os
+import clip
+import torch
+import torchvision
+from numpy import nan
 
-import numpy as np  # for basic operations over arrays
-from scipy.spatial import distance  # to compute the Gaussian kernel
-import cvxopt  # to solve the dual optimization problem
-import copy  # to copy numpy arrays
+import numpy as np
+from torch.utils.data import DataLoader
+from sklearn.metrics import confusion_matrix
+from torchvision.models import ResNet101_Weights, ResNet, GoogLeNet_Weights, Inception3
+from torchvision.transforms import Compose, ToTensor
+from torchvision.transforms.v2 import Grayscale, Resize
+from tqdm import tqdm
+from config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, regression, model_name, device, \
+    total_classes, C
+from main_classifier.dataloader.FishLoader import FishDataset
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report
 
+from svc_classifier.SVM_Impl import SVM
 
-class SVM:
-    linear = lambda x, xࠤ, c=0: x @ xࠤ.T
-    polynomial = lambda x, xࠤ, Q=5: (1 + x @ xࠤ.T) ** Q
-    rbf = lambda x, xࠤ, γ=10: np.exp(-γ * distance.cdist(x, xࠤ, 'sqeuclidean'))
-    kernel_funs = {'linear': linear, 'polynomial': polynomial, 'rbf': rbf}
+print('Model: ', model_name)
+if model_name == 'Clip':
+    model_version = 'ViT-L/14@336px'
+    # model_version = 'google/vit-hugepatch14–224-in21k'
+    # model_version = 'ViT-B/32'
+    # Load the model
+    model, preprocess = clip.load(model_version, device)
+else:
+    if model_name == 'ResNet':
+        model: ResNet = torchvision.models.resnet101(weights=ResNet101_Weights.DEFAULT)
+    elif model_name == 'GoogLeNet':
+        model = torch.hub.load('pytorch/vision:v0.10.0', 'googlenet', weights=GoogLeNet_Weights.DEFAULT)
+    elif model_name == 'Inception':
+        model: Inception3 = torchvision.models.Inception3(num_classes=500, aux_logits=True, init_weights=True)
+    else:
+        exit(-1)
+    if model_name == 'Inception':
+        preprocess = Compose([
+            # Resize(512),
+            ToTensor()
+        ])
+    else:
+        preprocess = Compose([
+            ToTensor(),
+        ])
 
-    def __init__(self, kernel='rbf', C=1, k=2):
-        # set the hyperparameters
-        self.kernel_str = kernel
-        self.kernel = SVM.kernel_funs[kernel]
-        self.C = C  # regularization parameter
-        self.k = k  # kernel parameter
+    model.to(device)
+    model.eval()
 
-        # training data and support vectors
-        self.X, y = None, None
-        self.αs = None
+trainDataset = FishDataset(os.path.join(clean_data_path, 'train'), preprocess=preprocess, fraction=subsample_fraction, filter_species=filter_species)
+valDataset = FishDataset(os.path.join(clean_data_path, 'val'), preprocess=preprocess, fraction=subsample_fraction, filter_species=filter_species)
 
-        # for multi-class classification
-        self.multiclass = False
-        self.clfs = []
-
-
-SVMClass = lambda func: setattr(SVM, func.__name__, func) or func
-
-
-@SVMClass
-def fit(self, X, y, eval_train=False):
-    if len(np.unique(y)) > 2:
-        self.multiclass = True
-        return self.multi_fit(X, y, eval_train)
-
-    # relabel if needed
-    if set(np.unique(y)) == {0, 1}: y[y == 0] = -1
-    # ensure y has dimensions Nx1
-    self.y = y.reshape(-1, 1).astype(np.double)  # Has to be a column vector
-    self.X = X
-    N = X.shape[0]
-
-    # compute the kernel over all possible pairs of (x, x') in the data
-    self.K = self.kernel(X, X, self.k)
-
-    # For 1/2 x^T P x + q^T x
-    P = cvxopt.matrix(self.y @ self.y.T * self.K)
-    q = cvxopt.matrix(-np.ones((N, 1)))
-
-    # For Ax = b
-    A = cvxopt.matrix(self.y.T)
-    b = cvxopt.matrix(np.zeros(1))
-
-    # For Gx <= h
-    G = cvxopt.matrix(np.vstack((-np.identity(N),
-                                 np.identity(N))))
-    h = cvxopt.matrix(np.vstack((np.zeros((N, 1)),
-                                 np.ones((N, 1)) * self.C)))
-
-    # Solve
-    cvxopt.solvers.options['show_progress'] = False
-    sol = cvxopt.solvers.qp(P, q, G, h, A, b)
-    self.αs = np.array(sol["x"])
-
-    # Maps into support vectors
-    self.is_sv = ((self.αs > 1e-3) & (self.αs <= self.C)).squeeze()
-    self.margin_sv = np.argmax((1e-3 < self.αs) & (self.αs < self.C - 1e-3))
-
-    if eval_train:
-        print(f"Finished training with accuracy {self.evaluate(X, y)}")
+# create training and validation set dataloaders
+trainDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE, shuffle=True)
+print('Train DataLoader length:', len(trainDataLoader))
+valDataLoader = DataLoader(valDataset, batch_size=BATCH_SIZE)
+print('Val DataLoader length:', len(valDataLoader))
 
 
-@SVMClass
-def multi_fit(self, X, y, eval_train=False):
-    self.k = len(np.unique(y))  # number of classes
-    # for each pair of classes
-    for i in range(self.k):
-        # get the data for the pair
-        Xs, Ys = X, copy.copy(y)
-        # change the labels to -1 and 1
-        Ys[Ys != i], Ys[Ys == i] = -1, +1
-        # fit the classifier
-        clf = SVM(kernel=self.kernel_str, C=self.C, k=self.k)
-        clf.fit(Xs, Ys)
-        # save the classifier
-        self.clfs.append(clf)
-    if eval_train:
-        print(f"Finished training with accuracy {self.evaluate(X, y)}")
+def get_features(dataset):
+    all_features = []
+    all_labels = []
+
+    with torch.no_grad():
+        for images, labels in tqdm(DataLoader(dataset, batch_size=BATCH_SIZE)):
+
+            if model_name == 'Clip':
+                features = model.encode_image(images.to('mps'))
+            else:
+                if model_name == 'Inception':
+                    features = model(images).logits
+                else:
+                    features = model(images)
+            all_features.append(features)
+
+            if regression == 'continuous':
+                all_labels.append(labels, dim=1)
+            elif regression == 'categorical':
+                all_labels.append(torch.argmax(labels, dim=1))
+            else:
+                all_labels.extend([labels])
+
+    return torch.cat(all_features).cpu().numpy(), torch.cat(all_labels).cpu().numpy()
 
 
-@SVMClass
-def predict(self, X_t):
-    if self.multiclass: return self.multi_predict(X_t)
-    xₛ, yₛ = self.X[self.margin_sv, np.newaxis], self.y[self.margin_sv]
-    αs, y, X = self.αs[self.is_sv], self.y[self.is_sv], self.X[self.is_sv]
+# Calculate the image features
+train_features, train_labels = get_features(trainDataset)
+test_features, test_labels = get_features(valDataset)
 
-    b = yₛ - np.sum(αs * y * self.kernel(X, xₛ, self.k), axis=0)
-    score = np.sum(αs * y * self.kernel(X, X_t, self.k), axis=0) + b
-    return np.sign(score).astype(int), score
+print('train_labels', train_labels)
+# -------------------------------------------------------------------------------
 
-
-@SVMClass
-def multi_predict(self, X):
-    # get the predictions from all classifiers
-    preds = np.zeros((X.shape[0], self.k))
-    for i, clf in enumerate(self.clfs):
-        _, preds[:, i] = clf.predict(X)
-
-    # get the argmax and the corresponding score
-    return np.argmax(preds, axis=1)
+classifier = SVM(kernel='rbf', k=3, C=C)
+classifier.fit(train_features, train_labels)
 
 
-@SVMClass
-def evaluate(self, X, y):
-    outputs, _ = self.predict(X)
-    accuracy = np.sum(outputs == y) / len(y)
-    return round(accuracy, 2)
+print('Fitting finished!')
+
+# Evaluate using the logistic regression classifier
+predictions = classifier.predict(test_features)
+print('Predicted test sample.')
+
+print('Confusion matrix\n', confusion_matrix(predictions, test_labels, labels=range(0, total_classes)))
+
+accuracy = np.mean((test_labels == predictions).astype(float)) * 100
+print(f"Accuracy = {accuracy:.3f}")
+
+print(classification_report(test_labels, predictions, zero_division=nan))
+
 
