@@ -9,12 +9,10 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import confusion_matrix
 from torchvision.models import ResNet101_Weights, ResNet, GoogLeNet_Weights, Inception3
 from torchvision.transforms import Compose, ToTensor
-from torchvision.transforms.v2 import Grayscale, Resize
 from tqdm import tqdm
 from config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, regression, model_name, device, \
     total_classes, C
-from main_classifier.dataloader.FishLoader import FishDataset
-from sklearn.svm import SVC
+from dataloader.FishLoader import FishDataset
 from sklearn.metrics import classification_report
 
 from svc_classifier.SVM_Impl import SVM
@@ -76,7 +74,7 @@ def get_features(dataset):
 
             if regression == 'continuous':
                 all_labels.append(labels, dim=1)
-            elif regression == 'categorical':
+            elif regression == 'categorical_abs':
                 all_labels.append(torch.argmax(labels, dim=1))
             else:
                 all_labels.extend([labels])

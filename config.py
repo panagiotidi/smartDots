@@ -23,10 +23,11 @@ INPUT_WIDTH = 512
 model_name = 'ViT'
 
 # Options:
-#  'categorical': classification, logistic regression
+#  'categorical_abs': classification, logistic regression, one absolute age
+#  'categorical_prob': classification, logistic regression, age probability range
 #  'continuous' : continuous, non-linear
 #  'ordinal' : Ordinal regression is half-way between classification and real-valued regression. When you perform multiclass classification of your ordinal data, you are assigning the same penalty whenever your classifier predicts a wrong class, no matter which one.
-regression = 'categorical'
+regression = 'categorical_prob'
 
 total_classes = 6
 
@@ -44,7 +45,7 @@ BATCH_SIZE = 12
 VAL_SPLIT = 0.2
 
 # ----------- For trainer -------------#
-epochs = 16
+epochs = 2
 learning_rate = 1e-04
 weight_decay = 0.01
 # ----------- For SVC_regression -------------#

@@ -5,26 +5,26 @@ import numpy as np
 import torch.nn as nn
 from numpy import nan
 from sklearn.metrics import classification_report
-from torch.optim import SGD
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import DataLoader
 import torch
 from torcheval.metrics import MulticlassConfusionMatrix
-from torchvision.transforms import ToTensor, Compose, Resize
-from torchvision.transforms.v2 import Normalize, Grayscale
-from main_classifier.dataloader.FishLoader import FishDataset
+from torchvision.transforms import ToTensor, Compose, Normalize
 
-from main_classifier.models.model_GoogLeNet import GoogLeNet
-from main_classifier.models.model_ViT import ViT
-from main_classifier.models.model_net import Net
-from main_classifier.models.model_resnet import ResNet
-from main_classifier.models.model_Inception import Inception
-from main_classifier.models.model_CLIP import Clip
-
+from dataloader.FishLoader import FishDataset
 
 from config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
     filter_species, model_name, regression, total_classes, weight_decay, metric_max_diff
 from utils import compute_max_diff
+from main_classifier.models.model_CLIP import Clip
+from main_classifier.models.model_ViT import ViT
+from main_classifier.models.model_GoogLeNet import GoogLeNet
+from main_classifier.models.model_resnet import ResNet
+from main_classifier.models.model_ResNetUNet import ResNetUNet
+from main_classifier.models.model_Inception import Inception
+
+
+torch.set_printoptions(profile="full")
 
 
 def str_to_class(classname):
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     #################### Model ###############################3
 
-    model = str_to_class(model_name)().to('mps')
+    model = str_to_class(model_name)().to(device)
     print('Model: ', model.__class__)
 
     #################### Define preprocess ###############################3
@@ -47,23 +47,16 @@ if __name__ == '__main__':
     if model_name == 'Clip':
         transforms = model.get_preprocess()
     else:
-        # trainTransforms = transforms.Compose([resize, hFlip, vFlip, rotate, transforms.ToTensor()])
-        # valTransforms = transforms.Compose([resize, transforms.ToTensor()])
-
         # initialize our data augmentation functions
         # resize = transforms.Resize(size=(INPUT_HEIGHT, INPUT_WIDTH))
         # hFlip = transforms.RandomHorizontalFlip(p=0.25)
         # vFlip = transforms.RandomVerticalFlip(p=0.25)
         # rotate = transforms.RandomRotation(degrees=15)
         # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-
+        # Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         transforms = Compose([
-                    # Resize(512),
-                    # transforms.CenterCrop(224),
-                    ToTensor(),
-                    # Grayscale(1),
-                    # Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-                ])
+            ToTensor()
+        ])
 
     #################### Data preparation ###############################3
 

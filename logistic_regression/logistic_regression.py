@@ -5,13 +5,11 @@ import torch
 from numpy import nan
 
 import numpy as np
-from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.linear_model import LogisticRegression
 from torch.utils.data import DataLoader
-from torcheval.metrics import MulticlassConfusionMatrix
 from tqdm import tqdm
-from config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, total_classes, regression, device, C
-from main_classifier.dataloader.FishLoader import FishDataset
-from sklearn.svm import SVC
+from config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, regression, device, C
+from dataloader.FishLoader import FishDataset
 from sklearn.metrics import classification_report
 
 
@@ -44,8 +42,10 @@ def get_features(dataset):
 
             if regression == 'continuous':
                 all_labels.append(labels, dim=1)
-            elif regression == 'categorical':
+            elif regression == 'categorical_abs':
                 all_labels.append(torch.argmax(labels, dim=1))
+            elif regression == 'categorical_prob':
+                exit('Probabilities as input..')
             else:
                 all_labels.extend([labels])
 

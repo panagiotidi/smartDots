@@ -1,7 +1,6 @@
 import torch
 from torch.nn import Linear, Module, Softmax, Sigmoid, ReLU
 from transformers import AutoImageProcessor, ViTForImageClassification
-
 from config import total_classes, regression, device
 
 
@@ -36,8 +35,9 @@ class ViT(Module):
 
         if regression == 'continuous':
             predictions = out.squeeze(-1)
-        elif regression == 'categorical':
-            predictions = self.softmax(out)
+        elif regression == 'categorical_abs' or regression == 'categorical_prob':
+            # predictions = self.softmax(out)
+            predictions = out
         else:
             predictions = self.sigmoid(out)
 

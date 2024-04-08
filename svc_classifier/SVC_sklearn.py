@@ -1,4 +1,5 @@
 import os
+
 import clip
 import torch
 import torchvision
@@ -9,11 +10,12 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import confusion_matrix
 from torchvision.models import ResNet101_Weights, ResNet, GoogLeNet_Weights, Inception3
 from torchvision.transforms import Compose, ToTensor
-from torchvision.transforms.v2 import Grayscale, Resize
 from tqdm import tqdm
+from transformers import ViTForImageClassification, AutoImageProcessor
+
 from config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, regression, model_name, device, \
     total_classes, C, metric_max_diff
-from main_classifier.dataloader.FishLoader import FishDataset
+from dataloader.FishLoader import FishDataset
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
 
@@ -33,8 +35,12 @@ else:
         model = torch.hub.load('pytorch/vision:v0.10.0', 'googlenet', weights=GoogLeNet_Weights.DEFAULT)
     elif model_name == 'Inception':
         model: Inception3 = torchvision.models.Inception3(num_classes=500, aux_logits=True, init_weights=True)
+    elif model_name == 'ViT':
+        image_processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
+        model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224",
+                                                                   ignore_mismatched_sizes=True)
     else:
-        exit(-1)
+        exit('No known model:', model_name)
     if model_name == 'Inception':
         preprocess = Compose([
             # Resize(512),
@@ -65,7 +71,10 @@ def get_features(dataset):
         for images, labels in tqdm(DataLoader(dataset, batch_size=BATCH_SIZE)):
 
             if model_name == 'Clip':
-                features = model.encode_image(images.to('mps'))
+                features = model.encode_image(images.to(device))
+            elif model_name == 'ViT':
+                inputs = image_processor(images, return_tensors="pt", do_rescale=False).to(device)
+                features = model(**inputs).logits
             else:
                 if model_name == 'Inception':
                     features = model(images).logits
@@ -75,7 +84,7 @@ def get_features(dataset):
 
             if regression == 'continuous':
                 all_labels.append(labels, dim=1)
-            elif regression == 'categorical':
+            elif regression == 'categorical_abs':
                 all_labels.append(torch.argmax(labels, dim=1))
             else:
                 all_labels.extend([labels])

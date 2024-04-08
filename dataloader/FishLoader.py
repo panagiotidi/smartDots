@@ -1,18 +1,19 @@
 import os
 
+import numpy as np
 import pandas as pd
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from config import device, total_classes, regression
-from utils import unify_label
+from utils import unify_label, getOldestAge
 
 
 def get_label_from_row(row):
     age = row['ModalAge_AllReaders']
     if regression == 'continuous':
         return float(age)
-    elif regression == 'categorical':
+    elif regression == 'categorical_abs':
         try:
             label = total_classes * [0.0]
             label[int(age)] = 1.0
@@ -20,6 +21,8 @@ def get_label_from_row(row):
         except:
             print('Error! Switching to unified label!!')
             return unify_label(row, total_classes)
+    elif regression == 'categorical_prob':
+        return unify_label(row, total_classes)
     # ordenal
     # See https://stackoverflow.com/questions/38375401/neural-network-ordinal-classification-for-age
     else:
@@ -46,7 +49,11 @@ class FishDataset(Dataset):
             dataset = dataset[dataset['Species'] == filter_species]
             print('After keeping only ' + filter_species + ' species:', len(dataset))
 
-        dataset = dataset[dataset['ModalAge_AllReaders'] <= total_classes - 1]
+        if regression == 'categorical_prob':
+            dataset["OldestAge"] = dataset.apply(getOldestAge, axis=1)
+            dataset = dataset[dataset['OldestAge'] <= total_classes - 1]
+        else:
+            dataset = dataset[dataset['ModalAge_AllReaders'] <= total_classes - 1]
         print('After removing rare ages data size:', len(dataset))
 
         dataset = dataset.sample(frac=fraction, replace=False, random_state=1)
@@ -70,10 +77,14 @@ class FishDataset(Dataset):
     def __getitem__(self, idx):
         img_path = self.data[idx]
 
+        # print('pic path:', img_path)
         input_image = Image.open(img_path)
+        # print('before:', list(input_image.getdata()))
         input_image = self.preprocess(input_image)
+        # print('after:', input_image)
 
         classes_annotations = self.labels[idx]
+        # print(classes_annotations)
         classes_annotations = torch.as_tensor(classes_annotations).float().to(device)
 
         return input_image.float().to(device), classes_annotations

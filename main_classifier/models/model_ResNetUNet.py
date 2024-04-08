@@ -97,7 +97,7 @@ class ResNetUNet(nn.Module):
 
         if regression == 'continuous':
             predictions = out.squeeze(-1)
-        elif regression == 'categorical':
+        elif regression == 'categorical_abs' or regression == 'categorical_prob':
             predictions = self.softmax(out)
         else:
             predictions = self.sigmoid(out)
