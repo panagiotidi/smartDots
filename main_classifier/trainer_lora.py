@@ -1,8 +1,11 @@
 import logging
 import os
 import sys
+
+import accelerate
 import numpy as np
 import torch.nn as nn
+from accelerate import DataLoaderConfiguration
 from numpy import nan
 import evaluate
 from transformers import TrainingArguments, Trainer, AutoImageProcessor, ViTForImageClassification, EvalPrediction
@@ -37,18 +40,78 @@ def str_to_class(classname):
     return getattr(sys.modules[__name__], classname)
 
 
+def collate_fn(examples):
+    pixel_values = torch.stack([example[0] for example in examples])
+    labels = torch.stack([example[1] for example in examples])
+    return {"pixel_values": pixel_values, "labels": labels}
+
+
+def compute_metrics(eval_pred: EvalPrediction):
+    """Computes accuracy on a batch of predictions"""
+    if regression == 'ordinal':
+        predictions = np.argmax(eval_pred.predictions, axis=1)
+        abs_labels = np.sum(eval_pred.label_ids, axis=1, dtype=np.int64) - 1
+    elif regression == 'categorical_prob' or regression == 'categorical_abs':
+        predictions = np.argmax(eval_pred.predictions, axis=1)
+        abs_labels = np.argmax(eval_pred.label_ids, axis=1)
+    else:
+        exit('Continuous regression not implemented!')
+
+    # print('predictions:', eval_pred.label_ids, eval_pred.predictions)
+    # print('targets:', predictions, abs_labels)
+
+    print(classification_report(abs_labels, predictions, zero_division=nan))
+    loss = criterion(torch.tensor(eval_pred.predictions.copy()).to(device),
+                     torch.tensor(eval_pred.label_ids.copy()).to(device))
+    print('crossentropy:', loss)
+    max_diff = compute_max_diff(predictions, abs_labels, metric_max_diff)
+    print('max_diff accuracy:', max_diff)
+
+    metric_conf_matrix.reset()
+    metric_conf_matrix.update(torch.tensor(predictions.copy()).cpu(), torch.tensor(abs_labels.copy()).cpu())
+    print('Confusion matrix\n', metric_conf_matrix.compute())
+
+    return metric.compute(predictions=predictions, references=abs_labels)
+
+
+class weighted_RMSELoss(nn.Module):
+    def __init__(self, weight):
+        super().__init__()
+        # self.weight = weight
+        self.weight = torch.tensor(6*[1.0]).to(device)
+
+    def forward(self, inputs, targets):
+        # print(inputs, targets, self.weight)
+        mse_loss = torch.sqrt(torch.sum(((inputs - targets) ** 2) * self.weight))
+        # print('mse_loss:', mse_loss)
+        return mse_loss
+
+
+class TrainerCustomLoss(Trainer):
+
+    def compute_loss(self, model, inputs, return_outputs=False):
+        # print('inputs:', inputs['pixel_values'].shape)
+        labels = inputs.get("labels")
+        outputs = model(**inputs)
+        logits = outputs.get('logits')
+        # print('logits:', logits)
+        # print('labels:', labels)
+        loss = criterion(logits, labels)
+        return (loss, outputs) if return_outputs else loss
+
+
 if __name__ == '__main__':
-
-    #################### Define class weights ###############################3
-
-    class_weights = weights
 
     #################### Model ###############################3
 
-    # model = str_to_class(model_name)().to(device)
-    image_processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
-    model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224", num_labels=total_classes,
-                                                      ignore_mismatched_sizes=True).to(device)
+    if model_name != 'ViT':
+        exit('Only ViT model with Lora adapter for now. Sorry..')
+    else:
+        # model = str_to_class(model_name)().to(device)
+        image_processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
+        model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224", num_labels=total_classes,
+                                                          ignore_mismatched_sizes=True).to(device)
+
     print('Model: ', model.__class__)
 
     #################### Define preprocess ###############################3
@@ -57,17 +120,16 @@ if __name__ == '__main__':
         exit('Only ViT model with Lora adapter for now. Sorry..')
     else:
         transforms = Compose([
-                    Resize(image_processor.size["height"]),
-                    # transforms.CenterCrop(224),
-                    ToTensor(),
-                    # Grayscale(1),
-                    # Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-                ])
+            Resize(image_processor.size["height"]),
+            ToTensor()
+        ])
 
     #################### Data preparation ###############################3
 
-    trainDataset = FishDataset(os.path.join(clean_data_path, 'train'), preprocess=transforms, fraction=subsample_fraction, filter_species=filter_species)
-    valDataset = FishDataset(os.path.join(clean_data_path, 'val'), preprocess=transforms, fraction=subsample_fraction, filter_species=filter_species)
+    trainDataset = FishDataset(os.path.join(clean_data_path, 'train'), preprocess=transforms,
+                               fraction=subsample_fraction, filter_species=filter_species)
+    valDataset = FishDataset(os.path.join(clean_data_path, 'val'), preprocess=transforms, fraction=subsample_fraction,
+                             filter_species=filter_species)
 
     # # create training and validation set dataloaders
     trainDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -75,31 +137,29 @@ if __name__ == '__main__':
     valDataLoader = DataLoader(valDataset, batch_size=BATCH_SIZE)
     print('Val DataLoader length:', len(valDataLoader))
 
+    #################### Define class weights ###############################3
+
+    if weights == 'inverse_quantities':
+        class_weights = trainDataset.getClassWeights()
+    else:
+        class_weights = torch.Tensor(total_classes * [1.0])
+
+    print('class weights:', class_weights)
+
     #################### Loss ###############################3
     print('Regression type: ', regression)
 
-    if regression == 'continuous':
-        criterion = nn.MSELoss().to(device)
+    if regression == 'continuous' or regression == 'ordinal':
+        criterion = weighted_RMSELoss(class_weights).to(device)
+        # criterion = nn.CrossEntropyLoss(reduction='mean')
     else:
-        criterion = nn.CrossEntropyLoss(weight=torch.tensor(class_weights).to(device), reduction='mean')
+        criterion = nn.CrossEntropyLoss(weight=class_weights.to(device), reduction='mean')
 
     print('Loss function: ', criterion)
 
-    # metric_conf_matrix = MulticlassConfusionMatrix(num_classes=total_classes)
+    metric_conf_matrix = MulticlassConfusionMatrix(num_classes=total_classes)
 
     metric = evaluate.load("accuracy")
-
-    def compute_metrics(eval_pred: EvalPrediction):
-        """Computes accuracy on a batch of predictions"""
-        predictions = np.argmax(eval_pred.predictions, axis=1)
-        abs_labels = np.argmax(eval_pred.label_ids, axis=1)
-        # print('predictions:', eval_pred.label_ids, eval_pred.predictions)
-        loss = criterion(torch.tensor(eval_pred.predictions.copy()).to(device), torch.tensor(eval_pred.label_ids.copy()).to(device))
-        print('crossentropy:', loss)
-        max_diff = compute_max_diff(predictions, abs_labels, metric_max_diff)
-        print('max_diff accuracy:', max_diff)
-        return metric.compute(predictions=predictions, references=abs_labels)
-
 
     #################### Optimizer, Scheduler ###############################3
 
@@ -125,9 +185,10 @@ if __name__ == '__main__':
 
     model_name_part = model_name.split("/")[-1]
 
-    # TrainingArguments.eval_steps
+    data_loader_config = DataLoaderConfiguration(dispatch_batches=None, split_batches=False)
+
     args = TrainingArguments(
-        f"{model_name_part}-finetuned-lora-food101",
+        f"{model_name_part}-finetuned-lora-otoliths",
         remove_unused_columns=False,
         evaluation_strategy="epoch",
         save_strategy="epoch",
@@ -149,14 +210,6 @@ if __name__ == '__main__':
         label_names=["labels"],
     )
 
-    def collate_fn(examples):
-        # print('examples:', examples[0][0].shape, examples[0][1].shape)
-        # print('examples1:', examples[1], len(examples))
-        pixel_values = torch.stack([example[0] for example in examples])
-        labels = torch.stack([example[1] for example in examples])
-        return {"pixel_values": pixel_values, "labels": labels}
-
-    # Trainer().
     trainer = Trainer(
         lora_model,
         args,
@@ -166,6 +219,7 @@ if __name__ == '__main__':
         compute_metrics=compute_metrics,
         data_collator=collate_fn,
     )
+
     train_results = trainer.train()
     # print(train_results)
     # print(trainer.state.log_history)

@@ -33,10 +33,6 @@ def str_to_class(classname):
 
 if __name__ == '__main__':
 
-    #################### Define class weights ###############################3
-
-    class_weights = weights
-
     #################### Model ###############################3
 
     model = str_to_class(model_name)().to(device)
@@ -68,6 +64,17 @@ if __name__ == '__main__':
     print('Train DataLoader length:', len(trainDataLoader))
     valDataLoader = DataLoader(valDataset, batch_size=BATCH_SIZE)
     print('Val DataLoader length:', len(valDataLoader))
+
+    #################### Define class weights ###############################3
+
+    if weights == 'inverse_quantities':
+        class_weights = trainDataset.getClassWeights()
+    else:
+        class_weights = torch.Tensor(total_classes * [1.0])
+
+    print('class weights:', class_weights)
+
+    print('class weights:', class_weights)
 
     #################### Loss ###############################3
     print('Regression type: ', regression)

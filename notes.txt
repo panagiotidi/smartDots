@@ -1,6 +1,27 @@
 ----------------
-main classifier, categorical, Inception features, all species, 1e-04, wd 0.001, 512x512 pics, 6 classes, 16 epochs, inverse_weights,
+main classifier, categorical_abs, Inception features, all species, 1e-04, wd 0.001, 512x512 pics, 6 classes, 16 epochs, inverse_weights,
 accuracy: 0.3 (before finish)
+
+----------------
+Lora classifier, categorical_prob, ViT features, all species, 1e-03, wd 0.01, 512x512 pics, 2 epochs, inverse_weights
+6 classes
+accuracy: 0.57
+max_diff accuracy: 0.906
+
+Lora classifier, categorical_prob, ViT features, all species, 1e-03, wd 0.01, 512x512 pics, 2 epochs, inverse_weights
+8 classes
+accuracy: 0.5
+max_diff accuracy: 0.866
+
+Lora classifier, categorical_prob, ViT features, all species, 1e-03, wd 0.01, 512x512 pics, 2 epochs, inverse_weights
+9 classes
+accuracy: 0.5
+max_diff accuracy: 0.843
+
+Lora classifier, categorical_prob, ViT features, all species, 1e-03, wd 0.01, 512x512 pics, 2 epochs, inverse_weights
+10 classes
+accuracy: 0.488
+max_diff accuracy: 0.834
 
 ----------------
 SVC categorical, Clip, all species, C=0.6, 512x512 pics, 6 classes,
@@ -17,3 +38,4 @@ ToDo
 Lora Adapters + ViT
 Ordinal regression
 Center of otolith + 4 slices
+Data augmentation

@@ -24,12 +24,6 @@ def is_label_ok(row):
     return True
 
 
-# def create_name(row):
-#     img_name: str = row['ImageName'].lower()
-#     img_new_name = os.path.splitext(img_name)[0] + '.jpg'
-#     return img_new_name
-
-
 def unify_label(row, num_classes):
     label = num_classes * [0.0]
     row_label: str = row['AgeReaders']
@@ -67,3 +61,4 @@ def inverse_weights(lst):
 
 def probs_from_lst(lst):
     return [l / sum(lst) for l in lst]
+

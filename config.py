@@ -29,15 +29,13 @@ model_name = 'ViT'
 #  'ordinal' : Ordinal regression is half-way between classification and real-valued regression. When you perform multiclass classification of your ordinal data, you are assigning the same penalty whenever your classifier predicts a wrong class, no matter which one.
 regression = 'categorical_prob'
 
-total_classes = 6
+total_classes = 10
 
-# weights = total_classes * [1.0]
-# weights = inverse_weights([69, 171, 141, 189, 199, 173, 118, 102, 68, 31, 32])
-# weights = inverse_weights([283,668,589,804,791,690,504,339,247,156,108])
-weights = inverse_weights([15, 47, 103, 261, 429, 430])
+# Possible values: None, 'inverse_quantities'
+weights = 'inverse_quantities'
 
 # Possible values: None, 'Pleuronectes platessa', 'Ammodytes', 'Solea solea', 'Pollachius pollachius', 'Micromesistius poutassou', 'Pollachius virens', 'Gadus morhua', etc.
-filter_species = 'Pleuronectes platessa'
+filter_species = None
 
 device = 'mps'
 subsample_fraction = 1.0
@@ -46,7 +44,7 @@ VAL_SPLIT = 0.2
 
 # ----------- For trainer -------------#
 epochs = 2
-learning_rate = 1e-04
+learning_rate = 1e-03
 weight_decay = 0.01
 # ----------- For SVC_regression -------------#
 C = 0.6

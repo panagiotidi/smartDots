@@ -6,7 +6,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from config import device, total_classes, regression
-from utils import unify_label, getOldestAge
+from utils import unify_label, getOldestAge, inverse_weights
 
 
 def get_label_from_row(row):
@@ -61,6 +61,8 @@ class FishDataset(Dataset):
         dataset.reset_index(drop=True)
 
         print('Unique ages count:', dataset['ModalAge_AllReaders'].value_counts())
+        # sorted_dict = dict(sorted(my_dict.items()))
+        self.class_weights = list(dict(sorted(dataset['ModalAge_AllReaders'].value_counts().to_dict().items())).values())
 
         self.data = []
         self.labels = []
@@ -88,3 +90,6 @@ class FishDataset(Dataset):
         classes_annotations = torch.as_tensor(classes_annotations).float().to(device)
 
         return input_image.float().to(device), classes_annotations
+
+    def getClassWeights(self):
+        return torch.Tensor(inverse_weights(self.class_weights))
