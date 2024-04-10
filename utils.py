@@ -1,6 +1,6 @@
 import numpy as np
-from numpy import exp
-from torch import softmax
+from sklearn.metrics import confusion_matrix
+
 
 smartdots_url = 'http://smartdots.ices.dk/sampleimages/'
 
@@ -62,3 +62,15 @@ def inverse_weights(lst):
 def probs_from_lst(lst):
     return [l / sum(lst) for l in lst]
 
+
+def print_separate_confusions(dataset, predictions, abs_labels):
+    dataset['abs_labels'] = abs_labels
+    dataset['predictions'] = predictions
+    unique_species = dataset.Species.unique()
+    print('unique_species', unique_species)
+    gb = dataset.groupby(['Species'])
+    for species in unique_species:
+        table = gb.get_group(species, )
+        preds = table['predictions']
+        ground = table['abs_labels']
+        print('Confusion for', species, ':\n', confusion_matrix(ground, preds))

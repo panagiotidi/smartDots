@@ -9,7 +9,8 @@ MinMaxAgeDif = 3
 # ---------------------------------------------------------------------------------------------------------------
 # Settings for preprocessing data
 data_csv = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024/data.csv'
-clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024_processed_simple'
+# clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024_processed_simple'
+clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024_processed_peri'
 # clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/subset/out_sofia'
 # clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed256x256'
 

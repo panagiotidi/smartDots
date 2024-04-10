@@ -45,6 +45,8 @@ class FishDataset(Dataset):
         dataset = pd.read_csv(os.path.join(pics_path, "data.csv"))
         print('Dataset size:', len(dataset))
 
+        print('Unique species count:', dataset['Species'].value_counts())
+
         if filter_species:
             dataset = dataset[dataset['Species'] == filter_species]
             print('After keeping only ' + filter_species + ' species:', len(dataset))
@@ -72,6 +74,8 @@ class FishDataset(Dataset):
             self.data.append(img_path)
             label = get_label_from_row(row)
             self.labels.append(label)
+
+        self.dataset = dataset
 
     def __len__(self):
         return len(self.data)

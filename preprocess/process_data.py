@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from config import VAL_SPLIT, original_path, clean_data_path, data_csv, total_classes
 from preprocess.preprocess_object_periklis import periklis_preprocess
 from utils import create_name, is_label_ok
-from process_object import pre_process
+from process_object_sofia import pre_process
 import shutil
 
 pd.set_option('display.max_colwidth', None)
@@ -41,8 +41,8 @@ def process_and_save(dataset, set_path):
             # img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY, dstCn=3)
             # img = cv2.merge([img,img,img])
 
-            img = pre_process(img)
-            # img = periklis_preprocess(img)
+            # img = pre_process(img)
+            img = periklis_preprocess(img)
 
             # Save .jpg image
             if os.path.exists(out_path + img_base_name):

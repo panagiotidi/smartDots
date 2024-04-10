@@ -1,14 +1,11 @@
-import logging
 import os
-import sys
-
-import accelerate
 import numpy as np
 import torch.nn as nn
 from accelerate import DataLoaderConfiguration
 from numpy import nan
 import evaluate
-from transformers import TrainingArguments, Trainer, AutoImageProcessor, ViTForImageClassification, EvalPrediction
+from transformers import TrainingArguments, Trainer, AutoImageProcessor, ViTForImageClassification, EvalPrediction, \
+    PretrainedConfig
 from sklearn.metrics import classification_report
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import DataLoader
@@ -19,8 +16,7 @@ from dataloader.FishLoader import FishDataset
 
 from config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
     filter_species, model_name, regression, total_classes, weight_decay, metric_max_diff
-from utils import compute_max_diff
-from main_classifier.models.model_ViT import ViT
+from utils import compute_max_diff, print_separate_confusions
 from peft import LoraConfig, get_peft_model
 
 
@@ -34,10 +30,6 @@ def print_trainable_parameters(model):
     print(
         f"trainable params: {trainable_params} || all params: {all_param} || trainable%: {100 * trainable_params / all_param:.2f}"
     )
-
-
-def str_to_class(classname):
-    return getattr(sys.modules[__name__], classname)
 
 
 def collate_fn(examples):
@@ -71,18 +63,18 @@ def compute_metrics(eval_pred: EvalPrediction):
     metric_conf_matrix.update(torch.tensor(predictions.copy()).cpu(), torch.tensor(abs_labels.copy()).cpu())
     print('Confusion matrix\n', metric_conf_matrix.compute())
 
+    print_separate_confusions(valDataset.dataset, predictions, abs_labels)
+
     return metric.compute(predictions=predictions, references=abs_labels)
 
 
 class weighted_RMSELoss(nn.Module):
     def __init__(self, weight):
         super().__init__()
-        # self.weight = weight
-        self.weight = torch.tensor(6*[1.0]).to(device)
 
     def forward(self, inputs, targets):
         # print(inputs, targets, self.weight)
-        mse_loss = torch.sqrt(torch.sum(((inputs - targets) ** 2) * self.weight))
+        mse_loss = torch.sqrt(torch.sum(((inputs - targets) ** 2) * class_weights))
         # print('mse_loss:', mse_loss)
         return mse_loss
 
@@ -103,6 +95,7 @@ class TrainerCustomLoss(Trainer):
 if __name__ == '__main__':
 
     #################### Model ###############################3
+    # lo:PretrainedConfig
 
     if model_name != 'ViT':
         exit('Only ViT model with Lora adapter for now. Sorry..')
@@ -153,7 +146,8 @@ if __name__ == '__main__':
         criterion = weighted_RMSELoss(class_weights).to(device)
         # criterion = nn.CrossEntropyLoss(reduction='mean')
     else:
-        criterion = nn.CrossEntropyLoss(weight=class_weights.to(device), reduction='mean')
+        # criterion = nn.CrossEntropyLoss(reduction='mean')
+        criterion = nn.CrossEntropyLoss(weight=torch.tensor(class_weights).to(device), reduction='mean')
 
     print('Loss function: ', criterion)
 

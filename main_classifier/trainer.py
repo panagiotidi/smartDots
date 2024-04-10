@@ -74,8 +74,6 @@ if __name__ == '__main__':
 
     print('class weights:', class_weights)
 
-    print('class weights:', class_weights)
-
     #################### Loss ###############################3
     print('Regression type: ', regression)
 
