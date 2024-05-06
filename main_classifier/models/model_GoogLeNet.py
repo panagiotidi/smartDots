@@ -2,7 +2,7 @@ import torch
 from torch.nn import Linear, Module, Softmax, Sigmoid, ReLU
 from torchvision.models import GoogLeNet_Weights
 
-from config import total_classes, regression
+from config import total_classes, regression, GoogLeNet_model
 
 
 class GoogLeNet(Module):
@@ -11,7 +11,7 @@ class GoogLeNet(Module):
         super().__init__()
 
         # GoogLeNet model
-        self.model_googlenet = torch.hub.load('pytorch/vision:v0.10.0', 'googlenet', weights=GoogLeNet_Weights.DEFAULT)
+        self.model_googlenet = torch.hub.load('pytorch/vision:v0.10.0', GoogLeNet_model, weights=GoogLeNet_Weights.DEFAULT)
 
         if regression == 'continuous':
             self.linear = Linear(in_features=1000, out_features=1)

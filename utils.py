@@ -1,13 +1,16 @@
 import numpy as np
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
+from numpy import nan
 
 
 smartdots_url = 'http://smartdots.ices.dk/sampleimages/'
 
 
 def create_name(row):
-    img_name: str = row['URL'].lower()
-    new_img_name = img_name.strip().replace(smartdots_url, '').replace('/', '_')
+    # img_name: str = row['URL'].lower()
+    img_name: str = row['URL']
+    # new_img_name = img_name.strip().replace(smartdots_url, '').replace('/', '_')
+    new_img_name = img_name.strip().replace(smartdots_url, '').split('/')[-1]
     return new_img_name
 
 
@@ -26,14 +29,14 @@ def is_label_ok(row):
 
 def unify_label(row, num_classes):
     label = num_classes * [0.0]
-    row_label: str = row['AgeReaders']
+    row_label: str = row['ReadersAges']
     # print('row:', row_label)
     splits = row_label.replace(' ', '').split('-')
     for split in splits:
         sp = split.split(':')
         class_number = sp[1]
         if int(class_number) >= num_classes:
-            print('Error! ', row['ModalAge_AllReaders'], row['AgeReaders'])
+            print('Error! ', row['ModalAge_AllReaders'], row['ReadersAges'])
             return None
         observ_amount = sp[0]
         label[int(class_number)] = int(observ_amount)
@@ -41,7 +44,7 @@ def unify_label(row, num_classes):
 
 
 def getOldestAge(row):
-    row_label: str = row['AgeReaders']
+    row_label: str = row['ReadersAges']
     splits = row_label.replace(' ', '').split('-')
     max_age = 0
     for split in splits:
@@ -70,7 +73,9 @@ def print_separate_confusions(dataset, predictions, abs_labels):
     print('unique_species', unique_species)
     gb = dataset.groupby(['Species'])
     for species in unique_species:
-        table = gb.get_group(species, )
+
+        table = gb.get_group((species,) )
         preds = table['predictions']
         ground = table['abs_labels']
+        print('Classification report for', species, ':\n', classification_report(ground, preds, zero_division=nan))
         print('Confusion for', species, ':\n', confusion_matrix(ground, preds))

@@ -39,10 +39,6 @@ if __name__ == '__main__':
     data.reset_index(drop=True)
     print('Data shape after removing ImageName duplicates:', data.shape)
 
-    data = data[data['MinMaxAgeDif'] <= MinMaxAgeDif]
-    data.reset_index(drop=True)
-    print('Data shape after removing MinMaxAgeDif more than ' + str(MinMaxAgeDif) + ':', data.shape)
-
     final_data = data.copy(deep=True)
 
     for index, row in data.iterrows():

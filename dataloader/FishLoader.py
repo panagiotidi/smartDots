@@ -14,17 +14,11 @@ def get_label_from_row(row):
     if regression == 'continuous':
         return float(age)
     elif regression == 'categorical_abs':
-        try:
-            label = total_classes * [0.0]
-            label[int(age)] = 1.0
-            return label
-        except:
-            print('Error! Switching to unified label!!')
-            return unify_label(row, total_classes)
+        label = age
+        return int(label)
     elif regression == 'categorical_prob':
         return unify_label(row, total_classes)
-    # ordenal
-    # See https://stackoverflow.com/questions/38375401/neural-network-ordinal-classification-for-age
+    # ordenal: see https://stackoverflow.com/questions/38375401/neural-network-ordinal-classification-for-age
     else:
         try:
             label = total_classes * [0.0]
@@ -48,10 +42,11 @@ class FishDataset(Dataset):
         print('Unique species count:', dataset['Species'].value_counts())
 
         if filter_species:
-            dataset = dataset[dataset['Species'] == filter_species]
-            print('After keeping only ' + filter_species + ' species:', len(dataset))
+            # print('ssss:', dataset['Species'] in filter_species)
+            dataset = dataset[dataset['Species'].isin(filter_species)]
+            print('After keeping only ' + str(filter_species) + ' species:', len(dataset))
 
-        if regression == 'categorical_prob':
+        if regression == 'categorical_prob' or regression == 'continuous':
             dataset["OldestAge"] = dataset.apply(getOldestAge, axis=1)
             dataset = dataset[dataset['OldestAge'] <= total_classes - 1]
         else:
@@ -69,7 +64,7 @@ class FishDataset(Dataset):
         self.data = []
         self.labels = []
         for index, row in dataset.iterrows():
-            img_base_name = row['Species'] + '_' + str(row['ModalAge_AllReaders']) + '_' + row['ImageName']
+            img_base_name = row['Species'] + '_' + str(row['ModalAge_AllReaders']) + '_' + row['Code']
             img_path = os.path.join(pics_path, img_base_name)
             self.data.append(img_path)
             label = get_label_from_row(row)

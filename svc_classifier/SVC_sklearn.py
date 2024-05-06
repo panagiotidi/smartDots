@@ -14,7 +14,7 @@ from tqdm import tqdm
 from transformers import ViTForImageClassification, AutoImageProcessor
 
 from config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, regression, model_name, device, \
-    total_classes, C, metric_max_diff
+    total_classes, C, metric_max_diff, ViT_model, ViT_model_proc, GoogLeNet_model, ViT_clip_model_preprocess_version
 from dataloader.FishLoader import FishDataset
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
@@ -23,22 +23,18 @@ from utils import compute_max_diff
 
 print('Model: ', model_name)
 if model_name == 'Clip':
-    model_version = 'ViT-L/14@336px'
-    # model_version = 'google/vit-hugepatch14–224-in21k'
-    # model_version = 'ViT-B/32'
     # Load the model
-    model, preprocess = clip.load(model_version, device)
+    model, preprocess = clip.load(ViT_clip_model_preprocess_version, device)
 else:
     if model_name == 'ResNet':
         model: ResNet = torchvision.models.resnet101(weights=ResNet101_Weights.DEFAULT)
     elif model_name == 'GoogLeNet':
-        model = torch.hub.load('pytorch/vision:v0.10.0', 'googlenet', weights=GoogLeNet_Weights.DEFAULT)
+        model = torch.hub.load('pytorch/vision:v0.10.0', GoogLeNet_model, weights=GoogLeNet_Weights.DEFAULT)
     elif model_name == 'Inception':
         model: Inception3 = torchvision.models.Inception3(num_classes=500, aux_logits=True, init_weights=True)
     elif model_name == 'ViT':
-        image_processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
-        model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224",
-                                                                   ignore_mismatched_sizes=True)
+        image_processor = AutoImageProcessor.from_pretrained(ViT_model_proc)
+        model = ViTForImageClassification.from_pretrained(ViT_model, ignore_mismatched_sizes=True)
     else:
         exit('No known model:', model_name)
     if model_name == 'Inception':
@@ -57,10 +53,10 @@ trainDataset = FishDataset(os.path.join(clean_data_path, 'train'), preprocess=pr
 valDataset = FishDataset(os.path.join(clean_data_path, 'val'), preprocess=preprocess, fraction=subsample_fraction, filter_species=filter_species)
 
 # create training and validation set dataloaders
-trainDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE, shuffle=True)
-print('Train DataLoader length:', len(trainDataLoader))
-valDataLoader = DataLoader(valDataset, batch_size=BATCH_SIZE)
-print('Val DataLoader length:', len(valDataLoader))
+# trainDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE, shuffle=True)
+# print('Train DataLoader length:', len(trainDataLoader))
+# valDataLoader = DataLoader(valDataset, batch_size=BATCH_SIZE)
+# print('Val DataLoader length:', len(valDataLoader))
 
 
 def get_features(dataset):
@@ -84,10 +80,10 @@ def get_features(dataset):
 
             if regression == 'continuous':
                 all_labels.append(labels, dim=1)
-            elif regression == 'categorical_abs':
-                all_labels.append(torch.argmax(labels, dim=1))
-            else:
-                all_labels.extend([labels])
+            elif regression == 'categorical_prob' or regression == 'ordinal':
+                exit('sklearn classification with probabilities/arrays as targets not allowed.')
+            else: #regression == 'categorical_abs':
+                all_labels.append(labels)
 
     return torch.cat(all_features).cpu().numpy(), torch.cat(all_labels).cpu().numpy()
 

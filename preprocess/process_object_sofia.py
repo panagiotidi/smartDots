@@ -59,7 +59,7 @@ def mark_largest(image):
     return mask_out, stats
 
 
-def pre_process(image):
+def pre_process_sofia1(image):
 
     # Find and crop area of interest
     marked, stats = mark_largest(image)
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     image = cv2.imread(file)
     # print('This image is:', type(image), ' with dimensions:', image.shape)
     # cv2.imshow('0. Original image', image)
-    final_image = pre_process(file, image)
+    final_image = pre_process_sofia1(file, image)
     # cv2.imshow('6. Final_image', final_image)
     # cv2.waitKey(0)
 

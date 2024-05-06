@@ -5,7 +5,7 @@ from accelerate import DataLoaderConfiguration
 from numpy import nan
 import evaluate
 from transformers import TrainingArguments, Trainer, AutoImageProcessor, ViTForImageClassification, EvalPrediction, \
-    PretrainedConfig
+    CLIPForImageClassification, CLIPImageProcessor
 from sklearn.metrics import classification_report
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import DataLoader
@@ -15,7 +15,9 @@ from torchvision.transforms import ToTensor, Compose, Resize
 from dataloader.FishLoader import FishDataset
 
 from config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
-    filter_species, model_name, regression, total_classes, weight_decay, metric_max_diff
+    filter_species, model_name, regression, total_classes, weight_decay, metric_max_diff, ViT_model, ViT_model_proc, \
+    Clip_model
+# from lora_classifier.models.model_CLIP import Clip
 from utils import compute_max_diff, print_separate_confusions
 from peft import LoraConfig, get_peft_model
 
@@ -79,43 +81,36 @@ class weighted_RMSELoss(nn.Module):
         return mse_loss
 
 
-class TrainerCustomLoss(Trainer):
-
-    def compute_loss(self, model, inputs, return_outputs=False):
-        # print('inputs:', inputs['pixel_values'].shape)
-        labels = inputs.get("labels")
-        outputs = model(**inputs)
-        logits = outputs.get('logits')
-        # print('logits:', logits)
-        # print('labels:', labels)
-        loss = criterion(logits, labels)
-        return (loss, outputs) if return_outputs else loss
-
-
 if __name__ == '__main__':
 
     #################### Model ###############################3
-    # lo:PretrainedConfig
 
-    if model_name != 'ViT':
-        exit('Only ViT model with Lora adapter for now. Sorry..')
+    if model_name == 'Clip':
+        image_processor: CLIPImageProcessor  = AutoImageProcessor.from_pretrained(Clip_model)
+        model = CLIPForImageClassification.from_pretrained(Clip_model, num_labels=total_classes, ignore_mismatched_sizes=True).to(device)
+        target_modules = ["q_proj", "k_proj", "v_proj", "out_proj"]
+    elif model_name == 'ViT':
+        image_processor = AutoImageProcessor.from_pretrained(ViT_model_proc)
+        model = ViTForImageClassification.from_pretrained(ViT_model, num_labels=total_classes, ignore_mismatched_sizes=True).to(device)
+        target_modules = ["query", "key", "value"]
     else:
-        # model = str_to_class(model_name)().to(device)
-        image_processor = AutoImageProcessor.from_pretrained("google/vit-base-patch16-224-in21k")
-        model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224", num_labels=total_classes,
-                                                          ignore_mismatched_sizes=True).to(device)
+        exit('Only Clip and ViT models with Lora adapter for now. Sorry..')
 
     print('Model: ', model.__class__)
 
     #################### Define preprocess ###############################3
-
-    if model_name != 'ViT':
-        exit('Only ViT model with Lora adapter for now. Sorry..')
-    else:
+    if model_name == 'Clip':
+        transforms = Compose([
+            Resize(image_processor.size["shortest_edge"]),
+            ToTensor()
+        ])
+    elif model_name == 'ViT':
         transforms = Compose([
             Resize(image_processor.size["height"]),
             ToTensor()
         ])
+    else:
+        exit('Only ViT model with Lora adapter for now. Sorry..')
 
     #################### Data preparation ###############################3
 
@@ -166,9 +161,9 @@ if __name__ == '__main__':
     #################### Train process ###############################3
 
     config = LoraConfig(
-        r=16,
-        lora_alpha=16,
-        target_modules=["query", "value"],
+        r=32,
+        lora_alpha=32,
+        target_modules=target_modules,
         lora_dropout=0.1,
         bias="none",
         modules_to_save=["classifier"],
