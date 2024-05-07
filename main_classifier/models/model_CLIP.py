@@ -1,9 +1,6 @@
 import clip
-import torch
 from torch.nn import Linear, Module, Softmax, Sigmoid, ReLU, Tanh
-from torchvision.transforms.v2 import Normalize
-from transformers import CLIPModel, CLIPImageProcessor, CLIPFeatureExtractor, CLIPProcessor
-from config import total_classes, regression, device, ViT_clip_model_preprocess_version
+from config import total_classes, regression, device, ViT_clip_model
 
 
 class Clip(Module):
@@ -12,7 +9,7 @@ class Clip(Module):
         super().__init__()
 
         # Clip model
-        self.clip_model, self.preprocess = clip.load(ViT_clip_model_preprocess_version, device, jit=False)
+        self.clip_model, self.preprocess = clip.load(ViT_clip_model, device, jit=False)
         self.clip_model.float()
         self.clip_model.train(False)
 

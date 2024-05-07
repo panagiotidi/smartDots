@@ -38,7 +38,7 @@ Default Trainer (no weights custom loss)
 
 ToDo
 
-Lora Adapters + ViT
+Remove fish with only one evaluator
 Ordinal regression
 Center of otolith + 4 slices
 Data augmentation
@@ -46,6 +46,6 @@ Include other data such as size/species?
 
 Include both pics from separation - OK
 See errors by species - OK
-
+Lora Adapters + ViT
 
 ----------------------

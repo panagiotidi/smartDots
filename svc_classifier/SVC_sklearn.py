@@ -14,7 +14,7 @@ from tqdm import tqdm
 from transformers import ViTForImageClassification, AutoImageProcessor
 
 from config import clean_data_path, subsample_fraction, filter_species, BATCH_SIZE, regression, model_name, device, \
-    total_classes, C, metric_max_diff, ViT_model, ViT_model_proc, GoogLeNet_model, ViT_clip_model_preprocess_version
+    total_classes, C, metric_max_diff, ViT_model, ViT_model, GoogLeNet_model, ViT_clip_model
 from dataloader.FishLoader import FishDataset
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
@@ -24,7 +24,7 @@ from utils import compute_max_diff
 print('Model: ', model_name)
 if model_name == 'Clip':
     # Load the model
-    model, preprocess = clip.load(ViT_clip_model_preprocess_version, device)
+    model, preprocess = clip.load(ViT_clip_model, device)
 else:
     if model_name == 'ResNet':
         model: ResNet = torchvision.models.resnet101(weights=ResNet101_Weights.DEFAULT)
@@ -33,7 +33,7 @@ else:
     elif model_name == 'Inception':
         model: Inception3 = torchvision.models.Inception3(num_classes=500, aux_logits=True, init_weights=True)
     elif model_name == 'ViT':
-        image_processor = AutoImageProcessor.from_pretrained(ViT_model_proc)
+        image_processor = AutoImageProcessor.from_pretrained(ViT_model)
         model = ViTForImageClassification.from_pretrained(ViT_model, ignore_mismatched_sizes=True)
     else:
         exit('No known model:', model_name)

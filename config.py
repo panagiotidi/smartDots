@@ -21,7 +21,7 @@ INPUT_HEIGHT = 512  # (416, 416)
 INPUT_WIDTH = 512
 
 # Options: 'ResNet', 'GoogLeNet', 'ResNetUNet', 'Inception', 'Clip', 'ViT'
-model_name = 'Clip'
+model_name = 'ViT'
 
 # Options:
 #  'categorical_abs': classification, logistic regression, one absolute age
@@ -46,7 +46,7 @@ BATCH_SIZE = 12
 VAL_SPLIT = 0.2
 
 # ----------- For trainer -------------#
-epochs = 3
+epochs = 4
 learning_rate = 1e-03
 weight_decay = 0.01
 # ----------- For SVC_regression -------------#
@@ -58,10 +58,13 @@ metric_max_diff = 1
 
 GoogLeNet_model = 'googlenet'
 
-ViT_model_proc = "google/vit-base-patch16-224-in21k"
+# ViT_model = 'google/vit-base-patch32-384'
+# ViT_model = 'google/vit-large-patch32-384'
+# ViT_model = "google/vit-base-patch16-224-in21k"
+ViT_model = 'google/vit-large-patch16-224-in21k'
 # ViT_model = "google/vit-base-patch16-224"
-ViT_model = ViT_model_proc
-ViT_clip_model_preprocess_version = 'ViT-L/14@336px'
+
+ViT_clip_model = 'ViT-L/14@336px'
 
 Clip_model = 'openai/clip-vit-base-patch32'
 # Clip_model = "openai/clip-vit-large-patch14"

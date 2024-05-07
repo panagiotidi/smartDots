@@ -15,7 +15,7 @@ from torchvision.transforms import ToTensor, Compose, Resize
 from dataloader.FishLoader import FishDataset
 
 from config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
-    filter_species, model_name, regression, total_classes, weight_decay, metric_max_diff, ViT_model, ViT_model_proc, \
+    filter_species, model_name, regression, total_classes, weight_decay, metric_max_diff, ViT_model, \
     Clip_model
 # from lora_classifier.models.model_CLIP import Clip
 from utils import compute_max_diff, print_separate_confusions
@@ -90,7 +90,7 @@ if __name__ == '__main__':
         model = CLIPForImageClassification.from_pretrained(Clip_model, num_labels=total_classes, ignore_mismatched_sizes=True).to(device)
         target_modules = ["q_proj", "k_proj", "v_proj", "out_proj"]
     elif model_name == 'ViT':
-        image_processor = AutoImageProcessor.from_pretrained(ViT_model_proc)
+        image_processor = AutoImageProcessor.from_pretrained(ViT_model)
         model = ViTForImageClassification.from_pretrained(ViT_model, num_labels=total_classes, ignore_mismatched_sizes=True).to(device)
         target_modules = ["query", "key", "value"]
     else:

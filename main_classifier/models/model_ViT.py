@@ -1,7 +1,7 @@
 import torch
 from torch.nn import Linear, Module, Softmax, Sigmoid, ReLU
 from transformers import AutoImageProcessor, ViTForImageClassification
-from config import total_classes, regression, device, ViT_model_proc, ViT_model
+from config import total_classes, regression, device, ViT_model
 
 
 class ViT(Module):
@@ -10,7 +10,7 @@ class ViT(Module):
         super().__init__()
 
         # ViT model
-        self.image_processor = AutoImageProcessor.from_pretrained(ViT_model_proc)
+        self.image_processor = AutoImageProcessor.from_pretrained(ViT_model)
         self.vit_model = ViTForImageClassification.from_pretrained(ViT_model,
                                                                    num_labels=total_classes,
                                                                    ignore_mismatched_sizes=True)
