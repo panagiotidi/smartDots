@@ -1,5 +1,3 @@
-from utils import inverse_weights
-
 # ---------------------------------------------------------------------------------------------------------------
 # Settings for downloading data
 # metadata_csv = '/Users/sofia/PycharmProjects/smartDots/data/SmartDotsSummaryExtraction3.csv'
