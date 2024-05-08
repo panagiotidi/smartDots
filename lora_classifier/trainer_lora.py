@@ -92,7 +92,7 @@ if __name__ == '__main__':
     elif model_name == 'ViT':
         image_processor = AutoImageProcessor.from_pretrained(ViT_model)
         model = ViTForImageClassification.from_pretrained(ViT_model, num_labels=total_classes, ignore_mismatched_sizes=True).to(device)
-        target_modules = ["query", "key", "value"]
+        target_modules = ["query", "key", "value", "classifier"]
     else:
         exit('Only Clip and ViT models with Lora adapter for now. Sorry..')
 
@@ -173,8 +173,6 @@ if __name__ == '__main__':
     "trainable params: 667493 || all params: 86466149 || trainable%: 0.77"
 
     model_name_part = model_name.split("/")[-1]
-
-    data_loader_config = DataLoaderConfiguration(dispatch_batches=None, split_batches=False)
 
     args = TrainingArguments(
         f"{model_name_part}-finetuned-lora-otoliths",

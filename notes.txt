@@ -38,11 +38,13 @@ Default Trainer (no weights custom loss)
 
 ToDo
 
+Stratif. split test, val to take also species
 Remove fish with only one evaluator
 Ordinal regression
 Center of otolith + 4 slices
 Data augmentation
 Include other data such as size/species?
+Fine tune Yolo?
 
 Include both pics from separation - OK
 See errors by species - OK

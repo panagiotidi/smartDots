@@ -3,10 +3,9 @@ import traceback
 import cv2
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from config import VAL_SPLIT, original_path, clean_data_path, data_csv, total_classes
-from preprocess.preprocess_object_periklis import periklis_preprocess
+from config import VAL_SPLIT, original_path, clean_data_path, data_csv
+from preprocess.preprocess_individ_picture.preprocess_object_periklis import periklis_preprocess
 from utils import create_name, is_label_ok
-from process_object_sofia import pre_process
 import shutil
 
 pd.set_option('display.max_colwidth', None)

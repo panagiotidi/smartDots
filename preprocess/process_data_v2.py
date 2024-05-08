@@ -3,10 +3,9 @@ import traceback
 import cv2
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from config import VAL_SPLIT, original_path, clean_data_path, data_csv, total_classes, INPUT_HEIGHT, INPUT_WIDTH, \
+from config import VAL_SPLIT, original_path, clean_data_path, data_csv, INPUT_HEIGHT, INPUT_WIDTH, \
     MinMaxAgeDif, MaxModalAge
-from preprocess.preprocess_object_periklis import periklis_preprocess
-from preprocess.preprocess_object_sofia2 import pre_process_sofia2
+from preprocess.preprocess_individ_picture.preprocess_object_sofia2 import pre_process_sofia2
 from utils import create_name, is_label_ok
 import shutil
 import glob
