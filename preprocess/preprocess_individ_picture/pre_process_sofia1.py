@@ -8,7 +8,7 @@ np.set_printoptions(threshold=sys.maxsize)
 
 # file = '/Users/sofia/PycharmProjects/smartDots/data/original_all_accordance/2018_195_2c99947d-a34e-4c8e-b0f6-b52bdfa06b5a.jpg'
 # file = '/Users/sofia/Desktop/2018_195_2c99947d-a34e-4c8e-b0f6-b52bdfa06b5a.jpg' # 5 years
-file = '/Users/sofia/Desktop/2022_412_e4d7d015-f0d8-4c2b-93da-7e359b327a65.jpg' # 5 years
+path = '/Users/sofia/PycharmProjects/smartDots/data/original_06_05_2024/Gadus morhua/0A7ABB41-F348-4406-BB3D-8A6686D0D7A2.png_0.png'
 # file = '/Users/sofia/Desktop/2023_523_fd7edccc-7590-43e5-aecb-b2cb3f288d6c.jpg' # 1 year
 # file = '/Users/sofia/Desktop/2023_523_20591985-f948-4e16-835c-065a84ec5629.jpg' # 4 years
 
@@ -127,10 +127,11 @@ def pre_process_sofia1(image):
 
 
 if __name__ == '__main__':
-    image = cv2.imread(file)
+    image = cv2.imread(path)
     # print('This image is:', type(image), ' with dimensions:', image.shape)
     # cv2.imshow('0. Original image', image)
-    final_image = pre_process_sofia1(file, image)
+    final_image = pre_process_sofia1(image)
+    cv2.imwrite('./output_sofia1.jpg', final_image)
     # cv2.imshow('6. Final_image', final_image)
     # cv2.waitKey(0)
 

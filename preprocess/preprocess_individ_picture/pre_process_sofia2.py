@@ -4,7 +4,7 @@ import numpy as np
 import config
 
 # path = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024/Ammodytes_0_2018_195_11ce9871-8774-439a-9e41-e6cb0a93160b.jpg'
-path = '/data/original_02_04_2024/Lepidorhombus whiffiagonis_15_2022_410_a6ddd476-de0d-4d3c-85f2-6ac91c309417.jpg'
+path = '/Users/sofia/PycharmProjects/smartDots/data/original_06_05_2024/Gadus morhua/0A7ABB41-F348-4406-BB3D-8A6686D0D7A2.png_0.png'
 
 
 def pre_process_sofia2(image):
@@ -45,6 +45,6 @@ def pre_process_sofia2(image):
 if __name__ == '__main__':
 
     image = cv2.imread(path)
-    pre_process_sofia2(image)
+    image = pre_process_sofia2(image)
     # Save or display the results as needed
-    cv2.imwrite('./lepresult2.jpg', image)
+    cv2.imwrite('./output_sofia2.jpg', image)

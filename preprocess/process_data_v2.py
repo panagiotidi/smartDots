@@ -1,11 +1,14 @@
+import importlib
 import os
 import traceback
 import cv2
 import pandas as pd
 from sklearn.model_selection import train_test_split
+
+import config
 from config import VAL_SPLIT, original_path, clean_data_path, data_csv, INPUT_HEIGHT, INPUT_WIDTH, \
     MinMaxAgeDif, MaxModalAge
-from preprocess.preprocess_individ_picture.preprocess_object_sofia2 import pre_process_sofia2
+from preprocess.preprocess_individ_picture import pre_process_sofia2, pre_process_sofia3
 from utils import create_name, is_label_ok
 import shutil
 import glob
@@ -41,7 +44,12 @@ def process_and_save(dataset, set_path):
             img_path = os.path.join(original_path, row['Species'], row['Code'])
             img = cv2.imread(img_path)
 
-            img = pre_process_sofia2(img)
+            module = importlib.import_module(config.preprocess_module)
+            preprocess_func = getattr(module, config.preprocess_function)
+
+            img = preprocess_func(img)
+
+            # img = pre_process_sofia2(img)
             img = cv2.resize(img, (INPUT_HEIGHT, INPUT_WIDTH))
 
             # Save .jpg image

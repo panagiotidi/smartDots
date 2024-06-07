@@ -36,15 +36,27 @@ Default Trainer (no weights custom loss)
 
 ----------------------
 
+Lora classifier, categorical_prob, ViT features, all species, 1e-03, wd 0.01, 512x512 pics, 4? epochs, inverse_weights,
+preprocess_data_v2 with preprocess.preprocess_individ_picture.pre_process_sofia3
+10 classes
+species: ['Gadus morhua', 'Pleuronectes platessa', 'Micromesistius poutassou', 'Lepidorhombus whiffiagonis', 'Clupea harengus', 'Solea solea']
+accuracy: 0.64
+max_diff accuracy: 0.94
+Default Trainer (no weights custom loss)
+
+--------------------
+
+
 ToDo
 
 Stratif. split test, val to take also species
-Remove fish with only one evaluator
 Ordinal regression
 Center of otolith + 4 slices
 Data augmentation
 Include other data such as size/species?
 Fine tune Yolo?
+Remove fish with only one evaluator
+Train with pics of multiple evaluators, evaluate on pics with one evaluator
 
 Include both pics from separation - OK
 See errors by species - OK

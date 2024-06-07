@@ -4,22 +4,26 @@ import torch.nn as nn
 from accelerate import DataLoaderConfiguration
 from numpy import nan
 import evaluate
+from torch.nn import ModuleList
 from transformers import TrainingArguments, Trainer, AutoImageProcessor, ViTForImageClassification, EvalPrediction, \
-    CLIPForImageClassification, CLIPImageProcessor
+    CLIPForImageClassification, CLIPImageProcessor, EfficientNetImageProcessor, EfficientNetForImageClassification, \
+    PretrainedConfig, EfficientNetConfig, Seq2SeqTrainer, SiglipForImageClassification, SiglipImageProcessor
 from sklearn.metrics import classification_report
 from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import DataLoader
 import torch
 from torcheval.metrics import MulticlassConfusionMatrix
 from torchvision.transforms import ToTensor, Compose, Resize
+from transformers.models.vit.modeling_vit import ViTLayer
+
 from dataloader.FishLoader import FishDataset
 
 from config import BATCH_SIZE, epochs, clean_data_path, subsample_fraction, device, learning_rate, weights, \
     filter_species, model_name, regression, total_classes, weight_decay, metric_max_diff, ViT_model, \
-    Clip_model
+    Clip_model, EfficientNet_model, SigLIP_model, num_layers_train
 # from lora_classifier.models.model_CLIP import Clip
 from utils import compute_max_diff, print_separate_confusions
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, get_peft_model, PeftModel
 
 
 def print_trainable_parameters(model):
@@ -50,9 +54,6 @@ def compute_metrics(eval_pred: EvalPrediction):
         abs_labels = np.argmax(eval_pred.label_ids, axis=1)
     else:
         exit('Continuous regression not implemented!')
-
-    # print('predictions:', eval_pred.label_ids, eval_pred.predictions)
-    # print('targets:', predictions, abs_labels)
 
     print(classification_report(abs_labels, predictions, zero_division=nan))
     loss = criterion(torch.tensor(eval_pred.predictions.copy()).to(device),
@@ -93,37 +94,54 @@ if __name__ == '__main__':
         image_processor = AutoImageProcessor.from_pretrained(ViT_model)
         model = ViTForImageClassification.from_pretrained(ViT_model, num_labels=total_classes, ignore_mismatched_sizes=True).to(device)
         target_modules = ["query", "key", "value", "classifier"]
+    elif model_name == 'EfficientNet':
+        image_processor = EfficientNetImageProcessor.from_pretrained(EfficientNet_model)
+        model = EfficientNetForImageClassification.from_pretrained(EfficientNet_model, num_labels=total_classes, ignore_mismatched_sizes=True).to(device)
+        # target_modules = ["convolution", "reduce", "expand", "project_conv", "expand_conv"]
+        target_modules = ["reduce", "expand"]
+    elif model_name == 'SigLIP':
+        image_processor = SiglipImageProcessor.from_pretrained(SigLIP_model)
+        model = SiglipForImageClassification.from_pretrained(SigLIP_model, num_labels=total_classes, ignore_mismatched_sizes=True).to(device)
+        target_modules = ["k_proj", "v_proj", "q_proj", "out_proj", "fc1", "fc2"]
     else:
-        exit('Only Clip and ViT models with Lora adapter for now. Sorry..')
+        exit('Only Clip, ViT, EfficientNet and SigLIP models with Lora adapter for now. Sorry..')
+    # target_modules = 'all-linear'
 
-    print('Model: ', model.__class__)
+    print('Lora target modules:', target_modules)
+    print('Model: ', model)
 
     #################### Define preprocess ###############################3
     if model_name == 'Clip':
         transforms = Compose([
-            Resize(image_processor.size["shortest_edge"]),
-            ToTensor()
+             ToTensor()
         ])
     elif model_name == 'ViT':
         transforms = Compose([
             Resize(image_processor.size["height"]),
             ToTensor()
         ])
+    elif model_name == 'EfficientNet':
+        transforms = Compose([
+            ToTensor()
+        ])
+    elif model_name == 'SigLIP':
+        transforms = Compose([
+            Resize(image_processor.size["height"]),
+            ToTensor()
+        ])
     else:
-        exit('Only ViT model with Lora adapter for now. Sorry..')
+        exit('Only Clip, ViT, EfficientNet and SigLIP models with Lora adapter for now. Sorry..')
 
     #################### Data preparation ###############################3
 
-    trainDataset = FishDataset(os.path.join(clean_data_path, 'train'), preprocess=transforms,
-                               fraction=subsample_fraction, filter_species=filter_species)
-    valDataset = FishDataset(os.path.join(clean_data_path, 'val'), preprocess=transforms, fraction=subsample_fraction,
-                             filter_species=filter_species)
+    trainDataset = FishDataset(os.path.join(clean_data_path, 'train'), preprocess=transforms, fraction=subsample_fraction, filter_species=filter_species)
+    valDataset = FishDataset(os.path.join(clean_data_path, 'val'), preprocess=transforms, fraction=subsample_fraction, filter_species=filter_species)
 
     # # create training and validation set dataloaders
-    trainDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE, shuffle=True)
-    print('Train DataLoader length:', len(trainDataLoader))
-    valDataLoader = DataLoader(valDataset, batch_size=BATCH_SIZE)
-    print('Val DataLoader length:', len(valDataLoader))
+    # trainDataLoader = DataLoader(trainDataset, batch_size=BATCH_SIZE, shuffle=True)
+    # print('Train DataLoader length:', len(trainDataLoader))
+    # valDataLoader = DataLoader(valDataset, batch_size=BATCH_SIZE)
+    # print('Val DataLoader length:', len(valDataLoader))
 
     #################### Define class weights ###############################3
 
@@ -168,9 +186,20 @@ if __name__ == '__main__':
         bias="none",
         modules_to_save=["classifier"],
     )
-    lora_model = get_peft_model(model, config)
+    lora_model: PeftModel = get_peft_model(model, config)
     print_trainable_parameters(lora_model)
     "trainable params: 667493 || all params: 86466149 || trainable%: 0.77"
+
+    print('lora_model:', )
+    base_model: ViTForImageClassification = lora_model.model
+    # for module_name, module in lora_model.named_modules():
+    #     print('lora module:', module_name, module.training)
+
+    target_modules: ModuleList = base_model.vit.encoder.layer
+    for i, layer in enumerate(target_modules):
+        if i >= len(target_modules) - num_layers_train:
+            layer.train(True)
+            print('Setting training True for layer:', i, layer.training)
 
     model_name_part = model_name.split("/")[-1]
 
@@ -197,7 +226,19 @@ if __name__ == '__main__':
         label_names=["labels"],
     )
 
-    trainer = Trainer(
+
+    class MyTrainer(Trainer):
+
+        def compute_loss(self, model, inputs, return_outputs=False):
+            labels = inputs.get("labels")
+            outputs = model(**inputs)
+            logits = outputs.get('logits')
+            loss = criterion(logits, labels)
+            # print('loss:', loss)
+            return (loss, outputs) if return_outputs else loss
+
+
+    trainer = MyTrainer(
         lora_model,
         args,
         train_dataset=trainDataset,
@@ -206,6 +247,7 @@ if __name__ == '__main__':
         compute_metrics=compute_metrics,
         data_collator=collate_fn,
     )
+    print(trainer.__class__)
 
     train_results = trainer.train()
     # print(train_results)

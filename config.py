@@ -1,8 +1,7 @@
 # ---------------------------------------------------------------------------------------------------------------
 # Settings for downloading data
-# metadata_csv = '/Users/sofia/PycharmProjects/smartDots/data/SmartDotsSummaryExtraction3.csv'
+metadata_csv = '/Users/sofia/PycharmProjects/smartDots/data/SmartDotsSummaryExtraction3.csv'
 original_path = '/Users/sofia/PycharmProjects/smartDots/data/original_06_05_2024'
-# original_path = '/Users/sofia/PycharmProjects/smartDots/subset'
 # ---------------------------------------------------------------------------------------------------------------
 # Settings for preprocessing data
 data_csv = '/Users/sofia/PycharmProjects/smartDots/data/SmartDotsSummaryExtraction3.csv'
@@ -10,6 +9,10 @@ clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/original_06_05_20
 # clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/original_02_04_2024_processed_simple'
 # clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/subset/out_sofia'
 # clean_data_path = '/Users/sofia/PycharmProjects/smartDots/data/all_accordance_processed256x256'
+
+preprocess_module = 'preprocess.preprocess_individ_picture.pre_process_sofia3'
+preprocess_function = "pre_process_sofia3"
+
 MinMaxAgeDif = 3
 MaxModalAge = 20
 # ---------------------------------------------------------------------------------------------------------------
@@ -18,7 +21,7 @@ MaxModalAge = 20
 INPUT_HEIGHT = 512  # (416, 416)
 INPUT_WIDTH = 512
 
-# Options: 'ResNet', 'GoogLeNet', 'ResNetUNet', 'Inception', 'Clip', 'ViT'
+# Options: 'ResNet', 'GoogLeNet', 'ResNetUNet', 'Inception', 'Clip', 'ViT', 'EfficientNet', 'SigLIP'
 model_name = 'ViT'
 
 # Options:
@@ -44,7 +47,8 @@ BATCH_SIZE = 12
 VAL_SPLIT = 0.2
 
 # ----------- For trainer -------------#
-epochs = 4
+num_layers_train = 2
+epochs = 5
 learning_rate = 1e-03
 weight_decay = 0.01
 # ----------- For SVC_regression -------------#
@@ -64,5 +68,10 @@ ViT_model = 'google/vit-large-patch16-224-in21k'
 
 ViT_clip_model = 'ViT-L/14@336px'
 
-Clip_model = 'openai/clip-vit-base-patch32'
-# Clip_model = "openai/clip-vit-large-patch14"
+# Clip_model = 'openai/clip-vit-base-patch32'
+Clip_model = "openai/clip-vit-large-patch14"
+
+# EfficientNet_model = "google/efficientnet-b0"
+EfficientNet_model = "google/efficientnet-b7"
+
+SigLIP_model = "google/siglip-base-patch16-256-multilingual"

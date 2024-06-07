@@ -3,7 +3,7 @@ import os
 import cv2
 
 from config import original_path, clean_data_path
-from preprocess.preprocess_individ_picture.preprocess_object_sofia1 import pre_process
+from preprocess.preprocess_individ_picture.pre_process_sofia1 import pre_process
 
 for filename in os.listdir(original_path):
     f = os.path.join(original_path, filename)

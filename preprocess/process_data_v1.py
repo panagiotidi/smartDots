@@ -4,7 +4,7 @@ import cv2
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from config import VAL_SPLIT, original_path, clean_data_path, data_csv
-from preprocess.preprocess_individ_picture.preprocess_object_periklis import periklis_preprocess
+from preprocess.preprocess_individ_picture.pre_process_periklis import pre_process_periklis
 from utils import create_name, is_label_ok
 import shutil
 
@@ -41,7 +41,7 @@ def process_and_save(dataset, set_path):
             # img = cv2.merge([img,img,img])
 
             # img = pre_process(img)
-            img = periklis_preprocess(img)
+            img = pre_process_periklis(img)
 
             # Save .jpg image
             if os.path.exists(out_path + img_base_name):
